@@ -3,10 +3,10 @@ import zipfile
 
 import numpy as np
 from napari_tifffile import napari_get_reader
-from napari_tifffile.tifffile import (imagecodecs_reader,
-                                      imagej_reader,
-                                      tifffile_reader,
-                                      zip_reader)
+from napari_tifffile.napari_tifffile import (imagecodecs_reader,
+                                             imagej_reader,
+                                             tifffile_reader,
+                                             zip_reader)
 import pytest
 import tifffile
 

@@ -11,33 +11,6 @@ import pytest
 import tifffile
 
 
-def test_reader(tmp_path):
-    """An example of how you might test your plugin."""
-
-    my_test_file = str(tmp_path / "myfile.tif")
-    original_data = np.random.rand(20, 20)
-    tifffile.imwrite(my_test_file, original_data)
-
-    # try to read it back in
-    reader = napari_get_reader(my_test_file)
-    assert callable(reader)
-
-    # make sure we're delivering the right format
-    layer_data_list = reader(my_test_file)
-    assert isinstance(layer_data_list, list) and len(layer_data_list) > 0
-    layer_data_tuple = layer_data_list[0]
-    assert isinstance(layer_data_tuple, tuple) and len(layer_data_tuple) > 0
-
-    # make sure it's the same as it started
-    np.testing.assert_allclose(original_data, layer_data_tuple[0])
-
-
-def test_get_reader_pass():
-    """Test None is returned if file format is not recognized."""
-    reader = napari_get_reader("fake.file")
-    assert reader is None
-
-
 def example_data_filepath(tmp_path, original_data):
     example_data_filepath = str(tmp_path / "myfile.tif")
     tifffile.imwrite(example_data_filepath, original_data)
@@ -60,11 +33,43 @@ def example_data_zipped(tmp_path, original_data):
     return example_zipped_filepath
 
 
+def test_get_reader_pass():
+    """Test None is returned if file format is not recognized."""
+    reader = napari_get_reader("fake.file")
+    assert reader is None
+
+
+@pytest.mark.parametrize("data_fixture, original_data", [
+    (example_data_filepath, np.random.random((20, 20))),
+    (example_data_zipped, np.random.random((20, 20))),
+    ])
+def test_reader(tmp_path, data_fixture, original_data):
+    """An example of how you might test your plugin."""
+
+    my_test_file = data_fixture(tmp_path, original_data)
+
+    # try to read it back in
+    reader = napari_get_reader(my_test_file)
+    assert callable(reader)
+
+    # make sure we're delivering the right format
+    layer_data_list = reader(my_test_file)
+    assert isinstance(layer_data_list, list) and len(layer_data_list) > 0
+    layer_data_tuple = layer_data_list[0]
+    assert isinstance(layer_data_tuple, tuple) and len(layer_data_tuple) > 0
+
+    # make sure it's the same as it started
+    if data_fixture == example_data_zipped:  # zipfile has unsqueezed dimension
+        np.testing.assert_allclose(original_data, layer_data_tuple[0][0])
+    else:
+        np.testing.assert_allclose(original_data, layer_data_tuple[0])
+
+
 @pytest.mark.parametrize("reader, data_fixture, original_data", [
     (imagecodecs_reader, example_data_filepath, np.random.random((20, 20))),
     (imagej_reader, example_data_tiff,  np.random.randint(0, 255, size=(20, 20)).astype(np.uint8)),
     (tifffile_reader, example_data_tiff, np.random.randint(0, 255, size=(20, 20)).astype(np.uint8)),
-    (zip_reader, example_data_zipped, np.random.rand(20, 20)),
+    (zip_reader, example_data_zipped, np.random.random((20, 20))),
     ])
 def test_all_readers(reader, data_fixture, original_data, tmp_path):
     """Test each individual reader."""

@@ -1,0 +1,10 @@
+site_name: napari-tifffile
+site_description: A napari plugin for tiff images.
+site_author: Genevieve Buckley
+
+theme: readthedocs
+
+repo_url: https://github.com/GenevieveBuckley/napari-tifffile
+
+pages:
+- Home: index.md

@@ -27,10 +27,9 @@ use_scm = {"write_to": "napari_tifffile/_version.py"}
 setup(
     name='napari-tifffile',
     author='Genevieve Buckley',
-    author_email='yourname@example.com',
     license='BSD-3',
     url='https://github.com/GenevieveBuckley/napari-tifffile',
-    description='A napari plugin for tiff images.',
+    description='A napari reader plugin for tiff images.',
     long_description=read('README.md'),
     long_description_content_type='text/markdown',
     packages=find_packages(),

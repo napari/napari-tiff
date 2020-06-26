@@ -54,7 +54,6 @@ def reader_function(path: PathLike) -> List[LayerData]:
     """Return a list of LayerData tuples from path or list of paths."""
     # TODO: Pyramids, OME, LSM
     with TiffFile(path) as tif:
-        # print(tif.__str__(detail=2))
         try:
             if tif.is_imagej:
                 layerdata = imagej_reader(tif)
@@ -192,9 +191,6 @@ def tifffile_reader(tif):
         # MINISBLACK
         colormap = 'gray_r'
 
-    # if colormap is None:
-    #     colormap = 'viridis'
-
     if (
         contrast_limits is None and
         data.dtype.kind == 'u' and
@@ -214,9 +210,7 @@ def tifffile_reader(tif):
         contrast_limits=contrast_limits,
         blending=blending,
         visible=visible,
-        # axis_labels=axes
     )
-    # print(kwargs)
     return [(data, kwargs, 'image')]
 
 
@@ -306,9 +300,7 @@ def imagej_reader(tif):
         contrast_limits=contrast_limits,
         blending=blending,
         visible=visible,
-        # axis_labels=axes
     )
-    # print(kwargs)
     return [(data, kwargs, 'image')]
 
 

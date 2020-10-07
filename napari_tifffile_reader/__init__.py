@@ -4,7 +4,7 @@ except ImportError:
     __version__ = "unknown"
 
 # replace the asterisk with named imports
-from .napari_tifffile import napari_get_reader
+from .napari_tifffile_reader import napari_get_reader
 
 
 __all__ = ["napari_get_reader"]

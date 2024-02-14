@@ -1,10 +1,10 @@
-# napari-tifffile-reader
+# napari-tiff
 
-[![License](https://img.shields.io/pypi/l/napari-tifffile-reader.svg?color=green)](https://github.com/napari/napari-tifffile-reader/raw/master/LICENSE)
-[![PyPI](https://img.shields.io/pypi/v/napari-tifffile-reader.svg?color=green)](https://pypi.org/project/napari-tifffile-reader)
-[![Python Version](https://img.shields.io/pypi/pyversions/napari-tifffile-reader.svg?color=green)](https://python.org)
-[![tests](https://github.com/GenevieveBuckley/napari-tifffile-reader/workflows/tests/badge.svg)](https://github.com/GenevieveBuckley/napari-tifffile-reader/actions)
-[![codecov](https://codecov.io/gh/GenevieveBuckley/napari-tifffile-reader/branch/master/graph/badge.svg)](https://codecov.io/gh/GenevieveBuckley/napari-tifffile-reader)
+[![License](https://img.shields.io/pypi/l/napari-tiff.svg?color=green)](https://github.com/napari/napari-tiff/raw/master/LICENSE)
+[![PyPI](https://img.shields.io/pypi/v/napari-tiff.svg?color=green)](https://pypi.org/project/napari-tiff)
+[![Python Version](https://img.shields.io/pypi/pyversions/napari-tiff.svg?color=green)](https://python.org)
+[![tests](https://github.com/GenevieveBuckley/napari-tiff/workflows/tests/badge.svg)](https://github.com/GenevieveBuckley/napari-tiff/actions)
+[![codecov](https://codecov.io/gh/GenevieveBuckley/napari-tiff/branch/master/graph/badge.svg)](https://codecov.io/gh/GenevieveBuckley/napari-tiff)
 
 A napari plugin for tiff images.
 
@@ -22,9 +22,9 @@ https://napari.org/docs/plugins/index.html
 
 ## Installation
 
-You can install `napari-tifffile-reader` via [pip]:
+You can install `napari-tiff` via [pip]:
 
-    pip install napari-tifffile-reader
+    pip install napari-tiff
 
 ## Contributing
 
@@ -34,7 +34,7 @@ the coverage at least stays the same before you submit a pull request.
 ## License
 
 Distributed under the terms of the [BSD-3] license,
-"napari-tifffile-reader" is free and open source software
+"napari-tiff" is free and open source software
 
 ## Issues
 
@@ -50,7 +50,7 @@ If you encounter any problems, please [file an issue] along with a detailed desc
 [Apache Software License 2.0]: http://www.apache.org/licenses/LICENSE-2.0
 [Mozilla Public License 2.0]: https://www.mozilla.org/media/MPL/2.0/index.txt
 [cookiecutter-napari-plugin]: https://github.com/napari/cookiecutter-napari-plugin
-[file an issue]: https://github.com/GenevieveBuckley/napari-tifffile-reader/issues
+[file an issue]: https://github.com/GenevieveBuckley/napari-tiff/issues
 [napari]: https://github.com/napari/napari
 [tox]: https://tox.readthedocs.io/en/latest/
 [pip]: https://pypi.org/project/pip/

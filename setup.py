@@ -22,13 +22,13 @@ with open('requirements.txt') as f:
 
 
 # https://github.com/pypa/setuptools_scm
-use_scm = {"write_to": "napari_tifffile_reader/_version.py"}
+use_scm = {"write_to": "napari_tiff/_version.py"}
 
 setup(
-    name='napari-tifffile-reader',
+    name='napari-tiff',
     author='Genevieve Buckley',
     license='BSD-3',
-    url='https://github.com/GenevieveBuckley/napari-tifffile-reader',
+    url='https://github.com/GenevieveBuckley/napari-tiff',
     description='A napari reader plugin for tiff images.',
     long_description=read('README.md'),
     long_description_content_type='text/markdown',
@@ -53,7 +53,7 @@ setup(
     ],
     entry_points={
         'napari.plugin': [
-            'tifffile = napari_tifffile_reader',
+            'tifffile = napari_tiff',
         ],
     },
 )

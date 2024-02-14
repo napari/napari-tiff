@@ -2,11 +2,11 @@ import os
 import zipfile
 
 import numpy as np
-from napari_tifffile_reader import napari_get_reader
-from napari_tifffile_reader.napari_tifffile_reader import (imagecodecs_reader,
-                                             imagej_reader,
-                                             tifffile_reader,
-                                             zip_reader)
+from napari_tiff import napari_get_reader
+from napari_tiff.napari_tiff_reader import (imagecodecs_reader,
+                                            imagej_reader,
+                                            tifffile_reader,
+                                            zip_reader)
 import pytest
 import tifffile
 

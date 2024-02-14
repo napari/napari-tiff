@@ -40,6 +40,7 @@ testing = [
 
 dev = [
    'tox',
+   'build',
 ]
 
 [tools.setuptools]

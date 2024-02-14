@@ -10,4 +10,5 @@ contributions:
     filename_patterns:
     - '*.tiff'
     - '*.tif'
+    - '*.zip'
     accepts_directories: true

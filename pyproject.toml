@@ -1,0 +1,68 @@
+[project]
+name = 'napari-tiff'
+description = 'official napari tiff reader and writer.'
+readme = 'README.md'
+dynamic = ['version']
+authors = [
+   {name = 'Genevieve Buckley'},
+   {name = 'napari core developers', email = 'napari-core-devs@googlegroups.com'},
+   {name = 'napari-tiff contributors'},
+]
+classifiers = [
+   'Development Status :: 3 - Alpha',
+   'Intended Audience :: Developers',
+   'Intended Audience :: Education',
+   'Intended Audience :: Science/Research',
+   'Framework :: napari',
+   'Programming Language :: Python',
+   'Programming Language :: Python :: 3',
+   'Programming Language :: Python :: 3.10',
+   'Programming Language :: Python :: 3.11',
+   'Programming Language :: Python :: 3.12',
+   'Topic :: Software Development :: Libraries',
+   'Topic :: Scientific/Engineering',
+   'Programming Language :: Python :: Implementation :: CPython',
+   'Operating System :: OS Independent',
+   'License :: OSI Approved :: BSD License',
+]
+requires-python = '>=3.10'
+dependencies = [
+   'imagecodecs',
+   'numpy',
+   'tifffile>=2020.5.7',
+   'vispy',
+]
+
+[project.optional-dependencies]
+testing = [
+   'pytest',
+]
+
+dev = [
+   'tox',
+]
+
+[tools.setuptools]
+include-package-data = true
+
+[tools.setuptools.package-data]
+napari-tiff = ['*napari.yaml']
+
+[project.entry-points.'napari.manifest']
+napari-tiff = 'napari_tiff:napari.yaml'
+
+[project.license]
+file = 'LICENSE'
+
+[project.urls]
+# homepage = ''
+# documentation = ''
+source = 'https://github.com/napari/napari-tiff'
+tracker = 'https://github.com/napari/napari-tiff/issues'
+
+[build-system]
+requires = ['setuptools', 'setuptools_scm', 'wheel']
+build-backend = 'setuptools.build_meta'
+
+[tool.setuptools_scm]
+write_to = 'napari_tiff/_version.py'

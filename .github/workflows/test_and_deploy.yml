@@ -33,10 +33,10 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Set up Python ${{ matrix.python-version }}
+      - name: Set up Python ${{ matrix.python }}
         uses: actions/setup-python@v4
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: ${{ matrix.python }}
 
       # these libraries enable testing Qt on Linux
       - uses: tlambert03/setup-qt-libs@v1
@@ -44,9 +44,8 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install setuptools tox tox-gh-actions
-          # python -m pip install .[all,testing]  # use when adding test deps
-          python -m pip install .
+          python -m pip install tox-gh-actions
+          python -m pip install .[dev,testing]
 
       - name: Test with tox
         run: tox
@@ -72,13 +71,12 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install setuptools setuptools_scm build wheel
+          python -m pip install .[dev,testing]
 
       - name: Build
         run: |
           git tag
-          # python -m build  # change to this when updating to pyproject.toml
-          python setup.py sdist bdist_wheel
+          python -m build
 
       - name: Publish to PyPI
         uses: pypa/gh-actions-pypi-publish@release/v1

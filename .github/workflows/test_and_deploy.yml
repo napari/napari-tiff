@@ -80,3 +80,14 @@ jobs:
 
       - name: Publish to PyPI
         uses: pypa/gh-actions-pypi-publish@release/v1
+
+      - name: Publish to GitHub
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ github.ref }}
+          name: ${{ env.tag }}
+          # body: add when we add release notes
+          draft: false
+          prerelease: ${{ contains(github.ref, 'rc') }}
+          files: |
+            dist/*

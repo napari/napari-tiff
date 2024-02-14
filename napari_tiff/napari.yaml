@@ -8,5 +8,6 @@ contributions:
   readers:
   - command: napari-tiff.get_reader
     filename_patterns:
-    - '*zip'
+    - '*.tiff'
+    - '*.tif'
     accepts_directories: true

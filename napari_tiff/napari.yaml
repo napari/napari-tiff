@@ -1,0 +1,13 @@
+name: napari-tiff
+schema_version: 0.2.0
+contributions:
+  commands:
+  - id: napari-tiff.get_reader
+    title: Get Reader
+    python_name: napari_tiff.napari_tiff_reader:napari_get_reader
+  readers:
+  - command: napari-tiff.get_reader
+    filename_patterns:
+    - '*.tiff'
+    - '*.tif'
+    accepts_directories: true

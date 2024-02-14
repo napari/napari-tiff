@@ -1,5 +1,4 @@
 imagecodecs
-napari-plugin-engine>=0.1.4
 numpy
 tifffile>=2020.5.7
 vispy

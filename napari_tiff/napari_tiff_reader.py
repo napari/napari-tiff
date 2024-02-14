@@ -12,7 +12,6 @@ https://napari.org/docs/plugins/for_plugin_developers.html
 from typing import List, Optional, Union, Any, Tuple, Dict, Callable
 
 import numpy
-from napari_plugin_engine import napari_hook_implementation
 from tifffile import TiffFile, TiffSequence, TIFF
 from vispy.color import Colormap
 
@@ -21,7 +20,6 @@ PathLike = Union[str, List[str]]
 ReaderFunction = Callable[[PathLike], List[LayerData]]
 
 
-@napari_hook_implementation
 def napari_get_reader(path: PathLike) -> Optional[ReaderFunction]:
     """Implements napari_get_reader hook specification.
 

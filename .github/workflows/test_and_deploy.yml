@@ -79,7 +79,7 @@ jobs:
           python -m build
 
       - name: Publish to PyPI
-        uses: pypa/gh-actions-pypi-publish@release/v1
+        uses: pypa/gh-action-pypi-publish@release/v1
 
       - name: Publish to GitHub
         uses: softprops/action-gh-release@v1

@@ -1,14 +1,13 @@
-import os
-import zipfile
-
 import numpy as np
-from napari_tiff import napari_get_reader
-from napari_tiff.napari_tiff_reader import (imagecodecs_reader,
-                                            imagej_reader,
-                                            tifffile_reader,
-                                            zip_reader)
+import os
 import pytest
 import tifffile
+import zipfile
+
+from napari_tiff import napari_get_reader
+from napari_tiff.napari_tiff_reader import (imagecodecs_reader,
+                                            tifffile_reader,
+                                            zip_reader)
 
 
 def example_data_filepath(tmp_path, original_data):
@@ -67,7 +66,6 @@ def test_reader(tmp_path, data_fixture, original_data):
 
 @pytest.mark.parametrize("reader, data_fixture, original_data", [
     (imagecodecs_reader, example_data_filepath, np.random.random((20, 20))),
-    (imagej_reader, example_data_tiff,  np.random.randint(0, 255, size=(20, 20)).astype(np.uint8)),
     (tifffile_reader, example_data_tiff, np.random.randint(0, 255, size=(20, 20)).astype(np.uint8)),
     (zip_reader, example_data_zipped, np.random.random((20, 20))),
     ])

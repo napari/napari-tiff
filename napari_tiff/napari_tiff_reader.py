@@ -11,8 +11,9 @@ https://napari.org/docs/plugins/for_plugin_developers.html
 """
 from typing import List, Optional, Union, Any, Tuple, Dict, Callable
 
+import dask.array as da
 import numpy
-from tifffile import TiffFile, TiffSequence, TIFF
+from tifffile import TiffFile, TiffSequence, TIFF, xml2dict
 from vispy.color import Colormap
 
 LayerData = Union[Tuple[Any], Tuple[Any, Dict], Tuple[Any, Dict, str]]
@@ -50,13 +51,10 @@ def napari_get_reader(path: PathLike) -> Optional[ReaderFunction]:
 
 def reader_function(path: PathLike) -> List[LayerData]:
     """Return a list of LayerData tuples from path or list of paths."""
-    # TODO: Pyramids, OME, LSM
+    # TODO: LSM
     with TiffFile(path) as tif:
         try:
-            if tif.is_imagej:
-                layerdata = imagej_reader(tif)
-            else:
-                layerdata = tifffile_reader(tif)
+            layerdata = tifffile_reader(tif)
         except Exception as exc:
             # fallback to imagecodecs
             log_warning(f'tifffile: {exc}')
@@ -72,14 +70,30 @@ def zip_reader(path: PathLike) -> List[LayerData]:
 
 
 def tifffile_reader(tif):
-    """Return napari LayerData from largest image series in TIFF file."""
+    """Return napari LayerData from image series in TIFF file."""
+    nlevels = len(tif.series[0])
+    if nlevels > 1:
+        data = [da.from_zarr(tif.aszarr(level=level)) for level in range(nlevels)]
+    else:
+        data = da.from_zarr(tif.aszarr())
+    if tif.is_ome:
+        kwargs = get_ome_tiff_metadata(tif)
+    elif tif.is_imagej:
+        kwargs = get_imagej_metadata(tif)
+    else:
+        kwargs = get_tiff_metadata(tif)
+    return [(data, kwargs, 'image')]
+
+
+def get_tiff_metadata(tif):
+    """Return napari metadata from largest image series in TIFF file."""
     # TODO: fix (u)int32/64
     # TODO: handle complex
     series = tif.series[0]
     for s in tif.series:
         if s.size > series.size:
             series = s
-    data = series.asarray()
+    dtype = series.dtype
     axes = series.axes
     shape = series.shape
     page = next(p for p in series.pages if p is not None)
@@ -108,7 +122,7 @@ def tifffile_reader(tif):
     elif (
         page.photometric in (2, 6) and (
             page.planarconfig == 2 or
-            (page.bitspersample > 8 and data.dtype.kind in 'iu') or
+            (page.bitspersample > 8 and dtype.kind in 'iu') or
             (extrasamples and len(extrasamples) > 1)
         )
     ):
@@ -191,7 +205,7 @@ def tifffile_reader(tif):
 
     if (
         contrast_limits is None and
-        data.dtype.kind == 'u' and
+        dtype.kind == 'u' and
         page.photometric != 3 and
         page.bitspersample not in (8, 16, 32, 64)
     ):
@@ -209,16 +223,16 @@ def tifffile_reader(tif):
         blending=blending,
         visible=visible,
     )
-    return [(data, kwargs, 'image')]
+    return kwargs
 
 
-def imagej_reader(tif):
+def get_imagej_metadata(tif):
     """Return napari LayerData from ImageJ hyperstack."""
     # TODO: ROI overlays
     ijmeta = tif.imagej_metadata
     series = tif.series[0]
 
-    data = series.asarray()
+    dtype = series.dtype
     axes = series.axes
     shape = series.shape
     page = series.pages[0]
@@ -263,7 +277,7 @@ def imagej_reader(tif):
         if mode in ('color', 'grayscale'):
             blending = 'opaque'
 
-    elif axes[-1] == 'S' and data.dtype == 'uint16':
+    elif axes[-1] == 'S' and dtype == 'uint16':
         # RGB >8-bit
         channel_axis = axes.find('S')
         if channel_axis >= 0 and shape[channel_axis] in (3, 4):
@@ -299,7 +313,27 @@ def imagej_reader(tif):
         blending=blending,
         visible=visible,
     )
-    return [(data, kwargs, 'image')]
+    return kwargs
+
+
+def get_ome_tiff_metadata(tif):
+    metadata = xml2dict(tif.ome_metadata)
+    if 'OME' in metadata:
+        metadata = metadata['OME']
+
+    # TODO: process ome metadata
+
+    kwargs = dict(
+        rgb=rgb,
+        channel_axis=channel_axis,
+        name=name,
+        scale=scale,
+        colormap=colormap,
+        contrast_limits=contrast_limits,
+        blending=blending,
+        visible=visible,
+    )
+    return kwargs
 
 
 def imagecodecs_reader(path):

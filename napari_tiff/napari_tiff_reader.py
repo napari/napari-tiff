@@ -11,7 +11,6 @@ https://napari.org/docs/plugins/for_plugin_developers.html
 """
 from typing import List, Optional, Union, Any, Tuple, Dict, Callable
 
-import dask.array as da
 import numpy
 from tifffile import TiffFile, TiffSequence, TIFF, xml2dict
 from vispy.color import Colormap
@@ -73,11 +72,13 @@ def tifffile_reader(tif):
     """Return napari LayerData from image series in TIFF file."""
     nlevels = len(tif.series[0])
     if nlevels > 1:
+        import dask.array as da
         data = [da.from_zarr(tif.aszarr(level=level)) for level in range(nlevels)]
     else:
-        data = da.from_zarr(tif.aszarr())
+        data = tif.asarray()
     if tif.is_ome:
         kwargs = get_ome_tiff_metadata(tif)
+    # TODO: combine interpretation of imagej and tags metadata?:
     elif tif.is_imagej:
         kwargs = get_imagej_metadata(tif)
     else:

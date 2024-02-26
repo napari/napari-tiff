@@ -17,9 +17,15 @@ def example_data_filepath(tmp_path, original_data):
 
 
 def example_data_tiff(tmp_path, original_data):
-    example_data_filepath = str(tmp_path / "myfile.tif")
-    tifffile.imwrite(example_data_filepath, original_data, imagej=True)
-    return tifffile.TiffFile(example_data_filepath)
+    filepath = str(tmp_path / "myfile.tif")
+    tifffile.imwrite(filepath, original_data)
+    return tifffile.TiffFile(filepath)
+
+
+def example_data_imagej(tmp_path, original_data):
+    filepath = str(tmp_path / "myfile.tif")
+    tifffile.imwrite(filepath, original_data, imagej=True)
+    return tifffile.TiffFile(filepath)
 
 
 def example_data_zipped(tmp_path, original_data):
@@ -66,6 +72,7 @@ def test_reader(tmp_path, data_fixture, original_data):
 
 @pytest.mark.parametrize("reader, data_fixture, original_data", [
     (imagecodecs_reader, example_data_filepath, np.random.random((20, 20))),
+    (tifffile_reader, example_data_imagej, np.random.randint(0, 255, size=(20, 20)).astype(np.uint8)),
     (tifffile_reader, example_data_tiff, np.random.randint(0, 255, size=(20, 20)).astype(np.uint8)),
     (zip_reader, example_data_zipped, np.random.random((20, 20))),
     ])

@@ -12,7 +12,7 @@ https://napari.org/docs/plugins/for_plugin_developers.html
 from typing import List, Optional, Union, Any, Tuple, Dict, Callable
 
 import numpy
-from tifffile import TiffFile, TiffSequence, TIFF, xml2dict
+from tifffile import TiffFile, TiffSequence, TIFF, xml2dict, PHOTOMETRIC
 from vispy.color import Colormap
 
 LayerData = Union[Tuple[Any], Tuple[Any, Dict], Tuple[Any, Dict, str]]
@@ -322,25 +322,100 @@ def get_ome_tiff_metadata(tif):
     if 'OME' in metadata:
         metadata = metadata['OME']
 
-    # TODO: process ome metadata
+    series = tif.series[0]
+    shape = series.shape
+    dtype = series.dtype
+    axes = series.axes.lower().replace('s', 'c')
+    if 'c' in axes:
+        channel_axis = axes.index('c')
+        nchannels = shape[channel_axis]
+    else:
+        channel_axis = None
+        nchannels = 1
 
-    kwargs = dict(
-        rgb=rgb,
+    image = ensure_list(metadata.get('Image', {}))[0]
+    pixels = image.get('Pixels', {})
+
+    pixel_size = []
+    size = float(pixels.get('PhysicalSizeX', 0))
+    if size > 0:
+        pixel_size.append(get_value_units_micrometer(size, pixels.get('PhysicalSizeXUnit')))
+    size = float(pixels.get('PhysicalSizeY', 0))
+    if size > 0:
+        pixel_size.append(get_value_units_micrometer(size, pixels.get('PhysicalSizeYUnit')))
+
+    channels = ensure_list(pixels.get('Channel', []))
+    if len(channels) > nchannels:
+        nchannels = len(channels)
+
+    is_rgb = (series.keyframe.photometric == PHOTOMETRIC.RGB and nchannels in (3, 4))
+
+    names = []
+    contrast_limits = []
+    colormaps = []
+    blendings = []
+    visibles = []
+
+    scale = None
+    if pixel_size:
+        scale = pixel_size
+
+    for channeli, channel in enumerate(channels):
+        name = channel.get('Name')
+        color = channel.get('Color')
+        colormap = None
+        if color:
+            colormap = int_to_rgba(int(color))
+        elif is_rgb and len(channels) > 1:
+            # separate RGB channels
+            colormap = ['red', 'green', 'blue', 'alpha'][channeli]
+            if not name:
+                name = colormap
+
+        contrast_limit = None
+        if dtype.kind != 'f':
+            info = numpy.iinfo(dtype)
+            contrast_limit = (info.min, info.max)
+
+        blending = 'additive'
+        visible = True
+
+        if len(channels) > 1:
+            names.append(name)
+            blendings.append(blending)
+            contrast_limits.append(contrast_limit)
+            colormaps.append(colormap)
+            visibles.append(visible)
+        else:
+            names = name
+            blendings = blending
+            contrast_limits = contrast_limit
+            colormaps = colormap
+            visibles = visible
+
+    meta = dict(
+        rgb=is_rgb,
         channel_axis=channel_axis,
-        name=name,
+        name=names,
         scale=scale,
-        colormap=colormap,
+        colormap=colormaps,
         contrast_limits=contrast_limits,
-        blending=blending,
-        visible=visible,
+        blending=blendings,
+        visible=visibles,
     )
-    return kwargs
+    return meta
 
 
 def imagecodecs_reader(path):
     """Return napari LayerData from first page in TIFF file."""
     from imagecodecs import imread
     return [(imread(path), {}, 'image')]
+
+
+def ensure_list(x):
+    if not isinstance(x, (list, tuple)):
+        x = [x]
+    return x
 
 
 def alpha_colormap(bitspersample=8, samples=4):
@@ -392,6 +467,23 @@ def cmyk_colormaps(bitspersample=8, samples=3):
         y[:, 3:] = 1.0
         k[:, 3:] = 1.0
     return [Colormap(c), Colormap(m), Colormap(y), Colormap(k)]
+
+
+def int_to_rgba(intrgba: int) -> tuple:
+    signed = (intrgba < 0)
+    rgba = [x / 255 for x in intrgba.to_bytes(4, signed=signed, byteorder="big")]
+    if rgba[-1] == 0:
+        rgba[-1] = 1
+    return tuple(rgba)
+
+
+def get_value_units_micrometer(value: float, unit: str = None) -> float:
+    conversions = {'nm': 1e-3, 'µm': 1, 'um': 1, 'micrometer': 1, 'mm': 1e3, 'cm': 1e4, 'm': 1e6}
+    if unit:
+        value_um = value * conversions.get(unit, 1)
+    else:
+        value_um = value
+    return value_um
 
 
 def log_warning(msg, *args, **kwargs):

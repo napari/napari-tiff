@@ -19,6 +19,8 @@ LayerData = Union[Tuple[Any], Tuple[Any, Dict], Tuple[Any, Dict, str]]
 PathLike = Union[str, List[str]]
 ReaderFunction = Callable[[PathLike], List[LayerData]]
 
+UNIT_CONVERSIONS = {'nm': 1e-3, 'µm': 1, 'um': 1, 'micrometer': 1, 'mm': 1e3, 'cm': 1e4, 'm': 1e6}
+
 
 def napari_get_reader(path: PathLike) -> Optional[ReaderFunction]:
     """Implements napari_get_reader hook specification.
@@ -478,9 +480,8 @@ def int_to_rgba(intrgba: int) -> tuple:
 
 
 def get_value_units_micrometer(value: float, unit: str = None) -> float:
-    conversions = {'nm': 1e-3, 'µm': 1, 'um': 1, 'micrometer': 1, 'mm': 1e3, 'cm': 1e4, 'm': 1e6}
     if unit:
-        value_um = value * conversions.get(unit, 1)
+        value_um = value * UNIT_CONVERSIONS.get(unit, 1)
     else:
         value_um = value
     return value_um

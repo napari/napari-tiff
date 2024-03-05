@@ -72,20 +72,20 @@ def zip_reader(path: PathLike) -> List[LayerData]:
 
 def tifffile_reader(tif):
     """Return napari LayerData from image series in TIFF file."""
-    nlevels = len(tif.series[0])
+    nlevels = len(tif.series[0].levels)
     if nlevels > 1:
         import dask.array as da
         data = [da.from_zarr(tif.aszarr(level=level)) for level in range(nlevels)]
     else:
         data = tif.asarray()
     if tif.is_ome:
-        kwargs = get_ome_tiff_metadata(tif)
+        layer_data = get_ome_tiff(tif, data)
     # TODO: combine interpretation of imagej and tags metadata?:
     elif tif.is_imagej:
-        kwargs = get_imagej_metadata(tif)
+        layer_data = [(data, get_imagej_metadata(tif), 'image')]
     else:
-        kwargs = get_tiff_metadata(tif)
-    return [(data, kwargs, 'image')]
+        layer_data = [(data, get_tiff_metadata(tif), 'image')]
+    return layer_data
 
 
 def get_tiff_metadata(tif):
@@ -319,7 +319,8 @@ def get_imagej_metadata(tif):
     return kwargs
 
 
-def get_ome_tiff_metadata(tif):
+def get_ome_tiff(tif, data):
+    layer_data = []
     metadata = xml2dict(tif.ome_metadata)
     if 'OME' in metadata:
         metadata = metadata['OME']
@@ -352,17 +353,15 @@ def get_ome_tiff_metadata(tif):
 
     is_rgb = (series.keyframe.photometric == PHOTOMETRIC.RGB and nchannels in (3, 4))
 
-    names = []
-    contrast_limits = []
-    colormaps = []
-    blendings = []
-    visibles = []
-
     scale = None
     if pixel_size:
         scale = pixel_size
 
     for channeli, channel in enumerate(channels):
+        if not is_rgb and channel_axis is not None:
+            data1 = [numpy.take(level_data, indices=channeli, axis=channel_axis) for level_data in data]
+        else:
+            data1 = data
         name = channel.get('Name')
         color = channel.get('Color')
         colormap = None
@@ -382,30 +381,17 @@ def get_ome_tiff_metadata(tif):
         blending = 'additive'
         visible = True
 
-        if len(channels) > 1:
-            names.append(name)
-            blendings.append(blending)
-            contrast_limits.append(contrast_limit)
-            colormaps.append(colormap)
-            visibles.append(visible)
-        else:
-            names = name
-            blendings = blending
-            contrast_limits = contrast_limit
-            colormaps = colormap
-            visibles = visible
-
-    meta = dict(
-        rgb=is_rgb,
-        channel_axis=channel_axis,
-        name=names,
-        scale=scale,
-        colormap=colormaps,
-        contrast_limits=contrast_limits,
-        blending=blendings,
-        visible=visibles,
-    )
-    return meta
+        meta = dict(
+            rgb=is_rgb,
+            name=name,
+            scale=scale,
+            colormap=colormap,
+            contrast_limits=contrast_limit,
+            blending=blending,
+            visible=visible,
+        )
+        layer_data.append((data1, meta, 'image'))
+    return layer_data
 
 
 def imagecodecs_reader(path):

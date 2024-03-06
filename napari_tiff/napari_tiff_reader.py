@@ -75,7 +75,12 @@ def tifffile_reader(tif):
     nlevels = len(tif.series[0].levels)
     if nlevels > 1:
         import dask.array as da
-        data = [da.from_zarr(tif.aszarr(level=level)) for level in range(nlevels)]
+        data = []
+        for level in range(nlevels):
+            level_data = da.from_zarr(tif.aszarr(level=level))
+            if level_data.chunksize == level_data.shape:
+                level_data = level_data.rechunk()
+            data.append(level_data)
     else:
         data = tif.asarray()
     if tif.is_ome:
@@ -359,7 +364,11 @@ def get_ome_tiff(tif, data):
 
     for channeli, channel in enumerate(channels):
         if not is_rgb and channel_axis is not None:
-            data1 = [numpy.take(level_data, indices=channeli, axis=channel_axis) for level_data in data]
+            # extract channel data
+            if isinstance(data, list):
+                data1 = [numpy.take(level_data, indices=channeli, axis=channel_axis) for level_data in data]
+            else:
+                data1 = numpy.take(data, indices=channeli, axis=channel_axis)
         else:
             data1 = data
         name = channel.get('Name')
@@ -368,7 +377,7 @@ def get_ome_tiff(tif, data):
         if color:
             colormap = int_to_rgba(int(color))
         elif is_rgb and len(channels) > 1:
-            # separate RGB channels
+            # separate channels provided for RGB (with missing color)
             colormap = ['red', 'green', 'blue', 'alpha'][channeli]
             if not name:
                 name = colormap

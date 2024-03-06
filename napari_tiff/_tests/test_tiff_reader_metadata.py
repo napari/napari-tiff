@@ -1,4 +1,4 @@
-from napari.layers import Image
+from napari.layers import Layer, Image
 import numpy as np
 import pytest
 import tifffile
@@ -30,15 +30,30 @@ def test_reader(tmp_path, data_fixture, original_filename, original_data):
     # make sure we're delivering the right format
     layer_datas = reader(test_file)
     assert isinstance(layer_datas, list) and len(layer_datas) > 0
-    layer_data = layer_datas[0]
-    assert isinstance(layer_data, tuple) and len(layer_data) > 0
 
-    # make sure it's the same as it started
-    data = layer_data[0]
-    if original_data is not None:
-        np.testing.assert_allclose(original_data, data)
+    for layer_data in layer_datas:
+        assert isinstance(layer_data, tuple) and len(layer_data) > 0
 
-    # test layer metadata
-    metadata = layer_data[1]
-    layer = Image(data, **metadata)
-    assert isinstance(layer, Image)
+        data = layer_data[0]
+        metadata = layer_data[1]
+
+        if original_data is not None:
+            # make sure the data is the same as it started
+            np.testing.assert_allclose(original_data, data)
+        else:
+            # test pixel data
+            if isinstance(data, list):
+                data0 = data[0]
+            else:
+                data0 = data
+            assert data0.size > 0
+            slicing = tuple([0] * data0.ndim)
+            value = np.array(data0[slicing])
+            assert value is not None and value.size > 0
+
+        # test layer metadata
+        layer = Layer.create(*layer_data)
+        assert isinstance(layer, Image)
+
+        layer = Image(data, **metadata)
+        assert isinstance(layer, Image)

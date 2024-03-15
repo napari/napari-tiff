@@ -199,7 +199,7 @@ def tifffile_reader(tif: TiffFile):
         if channel_axis is not None and shape[channel_axis] > 1:
             contrast_limits = [contrast_limits] * shape[channel_axis]
 
-    metadata = get_tiff_metadata(tif)
+    metadata_dict = get_tiff_metadata(tif)
 
     kwargs = dict(
         rgb=rgb,
@@ -210,7 +210,7 @@ def tifffile_reader(tif: TiffFile):
         contrast_limits=contrast_limits,
         blending=blending,
         visible=visible,
-        metadata=metadata,
+        metadata=metadata_dict,
     )
     return [(data, kwargs, 'image')]
 
@@ -292,7 +292,7 @@ def imagej_reader(tif: TiffFile):
     else:
         scale = tuple(scale.get(x, 1.0) for x in axes if x not in 'CS')
 
-    metadata = get_tiff_metadata(tif)
+    metadata_dict = get_tiff_metadata(tif)
 
     kwargs = dict(
         rgb=rgb,
@@ -303,7 +303,7 @@ def imagej_reader(tif: TiffFile):
         contrast_limits=contrast_limits,
         blending=blending,
         visible=visible,
-        metadata=metadata,
+        metadata=metadata_dict,
     )
     return [(data, kwargs, 'image')]
 
@@ -320,9 +320,10 @@ def get_tiff_metadata(tif: TiffFile) -> dict[str, Any]:
     empty_metadata_values = [None, '', (), []]
     for name in dir(tif.__class__):
         obj = getattr(tif.__class__, name)
-        if isinstance(obj, property) and 'metadata' in name:
+        if 'metadata' in name:
             metadata_value = obj.__get__(tif)
             if metadata_value not in empty_metadata_values:
+                print(metadata_value)
                 if isinstance(metadata_value, str):
                     try:
                         metadata_value = xml2dict(metadata_value)

@@ -30,7 +30,7 @@ dependencies = [
    'imagecodecs',
    'numpy',
    'tifffile>=2023.9.26',
-   'dask',
+   'dask[array]',
    'vispy',
    'zarr',
 ]
@@ -38,6 +38,7 @@ dependencies = [
 [project.optional-dependencies]
 testing = [
    'pytest',
+   'napari'
 ]
 
 dev = [

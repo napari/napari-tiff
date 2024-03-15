@@ -1,3 +1,4 @@
+from napari import Viewer
 from napari.layers import Layer, Image
 import numpy as np
 import pytest
@@ -52,8 +53,15 @@ def test_reader(tmp_path, data_fixture, original_filename, original_data):
             assert value is not None and value.size > 0
 
         # test layer metadata
-        layer = Layer.create(*layer_data)
-        assert isinstance(layer, Image)
+        if 'channel_axis' in metadata:
+            layers = Viewer().add_image(data, **metadata)
+            if not isinstance(layers, list):
+                layers = [layers]
+            for layer in layers:
+                assert isinstance(layer, Image)
+        else:
+            layer = Layer.create(*layer_data)  # incompatible with channel_axis
+            assert isinstance(layer, Image)
 
-        layer = Image(data, **metadata)
-        assert isinstance(layer, Image)
+            layer = Image(data, **metadata)    # incompatible with channel_axis
+            assert isinstance(layer, Image)

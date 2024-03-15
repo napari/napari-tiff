@@ -84,13 +84,13 @@ def tifffile_reader(tif):
     else:
         data = tif.asarray()
     if tif.is_ome:
-        layer_data = get_ome_tiff(tif, data)
+        kwargs = get_ome_tiff_metadata(tif)
     # TODO: combine interpretation of imagej and tags metadata?:
     elif tif.is_imagej:
-        layer_data = [(data, get_imagej_metadata(tif), 'image')]
+        kwargs = get_imagej_metadata(tif)
     else:
-        layer_data = [(data, get_tiff_metadata(tif), 'image')]
-    return layer_data
+        kwargs = get_tiff_metadata(tif)
+    return [(data, kwargs, 'image')]
 
 
 def get_tiff_metadata(tif):
@@ -324,22 +324,10 @@ def get_imagej_metadata(tif):
     return kwargs
 
 
-def get_ome_tiff(tif, data):
-    layer_data = []
+def get_ome_tiff_metadata(tif):
     metadata = xml2dict(tif.ome_metadata)
     if 'OME' in metadata:
         metadata = metadata['OME']
-
-    series = tif.series[0]
-    shape = series.shape
-    dtype = series.dtype
-    axes = series.axes.lower().replace('s', 'c')
-    if 'c' in axes:
-        channel_axis = axes.index('c')
-        nchannels = shape[channel_axis]
-    else:
-        channel_axis = None
-        nchannels = 1
 
     image = ensure_list(metadata.get('Image', {}))[0]
     pixels = image.get('Pixels', {})
@@ -352,25 +340,38 @@ def get_ome_tiff(tif, data):
     if size > 0:
         pixel_size.append(get_value_units_micrometer(size, pixels.get('PhysicalSizeYUnit')))
 
+    series = tif.series[0]
+    shape = series.shape
+    dtype = series.dtype
+    axes = series.axes.lower().replace('s', 'c')
+    if 'c' in axes:
+        channel_axis = axes.index('c')
+        nchannels = shape[channel_axis]
+    else:
+        channel_axis = None
+        nchannels = 1
+
     channels = ensure_list(pixels.get('Channel', []))
     if len(channels) > nchannels:
         nchannels = len(channels)
 
     is_rgb = (series.keyframe.photometric == PHOTOMETRIC.RGB and nchannels in (3, 4))
 
+    if is_rgb:
+        # channels_axis appears to be incompatible with RGB channels
+        channel_axis = None
+
+    names = []
+    contrast_limits = []
+    colormaps = []
+    blendings = []
+    visibles = []
+
     scale = None
     if pixel_size:
         scale = pixel_size
 
     for channeli, channel in enumerate(channels):
-        if not is_rgb and channel_axis is not None:
-            # extract channel data
-            if isinstance(data, list):
-                data1 = [numpy.take(level_data, indices=channeli, axis=channel_axis) for level_data in data]
-            else:
-                data1 = numpy.take(data, indices=channeli, axis=channel_axis)
-        else:
-            data1 = data
         name = channel.get('Name')
         color = channel.get('Color')
         colormap = None
@@ -382,25 +383,40 @@ def get_ome_tiff(tif, data):
             if not name:
                 name = colormap
 
-        contrast_limit = None
-        if dtype.kind != 'f':
-            info = numpy.iinfo(dtype)
-            contrast_limit = (info.min, info.max)
-
         blending = 'additive'
         visible = True
 
-        meta = dict(
-            rgb=is_rgb,
-            name=name,
-            scale=scale,
-            colormap=colormap,
-            contrast_limits=contrast_limit,
-            blending=blending,
-            visible=visible,
-        )
-        layer_data.append((data1, meta, 'image'))
-    return layer_data
+        if dtype.kind == 'f':
+            contrast_limit = None
+        else:
+            info = numpy.iinfo(dtype)
+            contrast_limit = (info.min, info.max)
+
+        if len(channels) > 1:
+            names.append(name)
+            blendings.append(blending)
+            contrast_limits.append(contrast_limit)
+            colormaps.append(colormap)
+            visibles.append(visible)
+        else:
+            names = name
+            blendings = blending
+            contrast_limits = contrast_limit
+            colormaps = colormap
+            visibles = visible
+
+    kwargs = dict(
+        rgb=is_rgb,
+        channel_axis=channel_axis,
+        name=names,
+        scale=scale,
+        colormap=colormaps,
+        contrast_limits=contrast_limits,
+        blending=blendings,
+        visible=visibles,
+        metadata=metadata,
+    )
+    return kwargs
 
 
 def imagecodecs_reader(path):

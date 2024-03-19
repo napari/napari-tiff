@@ -17,8 +17,9 @@ def generate_ometiff_file(tmp_path, filename, data):
 
 
 @pytest.mark.parametrize("data_fixture, original_filename, original_data", [
-    (generate_ometiff_file, "myfile.ome.tif", np.random.randint(0, 255, size=(16, 16)).astype(np.uint8)),
-    (generate_ometiff_file, "myfile.ome.tif", np.random.randint(0, 255, size=(16, 16, 3)).astype(np.uint8)),
+    (generate_ometiff_file, "single_channel.ome.tif", np.random.randint(0, 255, size=(16, 16)).astype(np.uint8)),
+    (generate_ometiff_file, "multi_channel.ome.tif", np.random.randint(0, 255, size=(2, 16, 16)).astype(np.uint8)),
+    (generate_ometiff_file, "rgb.ome.tif", np.random.randint(0, 255, size=(16, 16, 3)).astype(np.uint8)),
     (None, "D:/slides/test/*", None),
     ])
 def test_reader(tmp_path, data_fixture, original_filename, original_data):

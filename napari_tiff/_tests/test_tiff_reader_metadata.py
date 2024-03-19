@@ -10,25 +10,31 @@ from napari_tiff import napari_get_reader
 viewer = None
 
 
-def generate_ometiff_file(tmp_path, filename, data):
+def generate_ometiff_file(tmp_path, filename, data, metadata):
     filepath = str(tmp_path / filename)
-    tifffile.imwrite(filepath, data, ome=True)
+    tifffile.imwrite(filepath, data, ome=True, metadata=metadata)
     return filepath
 
 
-@pytest.mark.parametrize("data_fixture, original_filename, original_data", [
-    (generate_ometiff_file, "single_channel.ome.tif", np.random.randint(0, 255, size=(16, 16)).astype(np.uint8)),
-    (generate_ometiff_file, "multi_channel.ome.tif", np.random.randint(0, 255, size=(2, 16, 16)).astype(np.uint8)),
-    (generate_ometiff_file, "rgb.ome.tif", np.random.randint(0, 255, size=(16, 16, 3)).astype(np.uint8)),
-    (None, "D:/slides/test/*", None),
+def get_files(tmp_path, path, data, metadata):
+    # TODO download files instead; path can be URL
+    filepaths = glob(path)
+    return filepaths
+
+
+@pytest.mark.parametrize("data_fixture, original_filename, original_data, original_metadata", [
+    (generate_ometiff_file, "single_channel.ome.tif", np.random.randint(0, 255, size=(16, 16)).astype(np.uint8), None),
+    (generate_ometiff_file, "multi_channel.ome.tif", np.random.randint(0, 65535, size=(2, 16, 16)).astype(np.uint16),
+     {'Channel': [{'Name': 'WF', 'Color': '-1'}, {'Name': 'Fluor', 'Color': '16711935'}]}),
+    (generate_ometiff_file, "rgb.ome.tif", np.random.randint(0, 255, size=(16, 16, 3)).astype(np.uint8), None),
+    (get_files, "D:/slides/test/*", None, None),
     ])
-def test_reader(tmp_path, data_fixture, original_filename, original_data):
+def test_reader(data_fixture, original_filename, original_data, original_metadata, tmp_path):
     global viewer
 
-    if data_fixture is not None:
-        test_files = [data_fixture(tmp_path, original_filename, original_data)]
-    else:
-        test_files = glob(original_filename)
+    test_files = data_fixture(tmp_path, original_filename, original_data, original_metadata)
+    if not isinstance(test_files, list):
+        test_files = [test_files]
 
     for test_file in test_files:
         # try to read it back in

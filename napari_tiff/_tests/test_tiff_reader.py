@@ -31,7 +31,7 @@ def example_data_imagej(tmp_path, original_data):
 
 def example_data_ometiff(tmp_path, original_data):
     example_data_filepath = str(tmp_path / "example_data_ometiff.ome.tif")
-    tifffile.imwrite(example_data_filepath, original_data, imagej=True)
+    tifffile.imwrite(example_data_filepath, original_data, imagej=False)
     return tifffile.TiffFile(example_data_filepath)
 
 

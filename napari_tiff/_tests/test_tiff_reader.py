@@ -12,14 +12,26 @@ import tifffile
 
 
 def example_data_filepath(tmp_path, original_data):
-    example_data_filepath = str(tmp_path / "myfile.tif")
-    tifffile.imwrite(example_data_filepath, original_data)
+    example_data_filepath = str(tmp_path / "example_data_filepath.tif")
+    tifffile.imwrite(example_data_filepath, original_data, imagej=False)
     return example_data_filepath
 
 
 def example_data_tiff(tmp_path, original_data):
-    example_data_filepath = str(tmp_path / "myfile.tif")
+    example_data_filepath = str(tmp_path / "example_data_tiff.tif")
+    tifffile.imwrite(example_data_filepath, original_data, imagej=False)
+    return tifffile.TiffFile(example_data_filepath)
+
+
+def example_data_imagej(tmp_path, original_data):
+    example_data_filepath = str(tmp_path / "example_data_imagej.tif")
     tifffile.imwrite(example_data_filepath, original_data, imagej=True)
+    return tifffile.TiffFile(example_data_filepath)
+
+
+def example_data_ometiff(tmp_path, original_data):
+    example_data_filepath = str(tmp_path / "example_data_ometiff.ome.tif")
+    tifffile.imwrite(example_data_filepath, original_data, imagej=False)
     return tifffile.TiffFile(example_data_filepath)
 
 
@@ -67,8 +79,9 @@ def test_reader(tmp_path, data_fixture, original_data):
 
 @pytest.mark.parametrize("reader, data_fixture, original_data", [
     (imagecodecs_reader, example_data_filepath, np.random.random((20, 20))),
-    (imagej_reader, example_data_tiff,  np.random.randint(0, 255, size=(20, 20)).astype(np.uint8)),
+    (imagej_reader, example_data_imagej,  np.random.randint(0, 255, size=(20, 20)).astype(np.uint8)),
     (tifffile_reader, example_data_tiff, np.random.randint(0, 255, size=(20, 20)).astype(np.uint8)),
+    (tifffile_reader, example_data_ometiff, np.random.randint(0, 255, size=(20, 20)).astype(np.uint8)),
     (zip_reader, example_data_zipped, np.random.random((20, 20))),
     ])
 def test_all_readers(reader, data_fixture, original_data, tmp_path):

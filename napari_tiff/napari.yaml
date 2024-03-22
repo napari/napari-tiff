@@ -7,8 +7,29 @@ contributions:
     python_name: napari_tiff.napari_tiff_reader:napari_get_reader
   readers:
   - command: napari-tiff.get_reader
+    accepts_directories: true
     filename_patterns:
+    # All tiff file extensions described in the tifffile library, plus .zip files
+    # See https://github.com/cgohlke/tifffile/blob/2b5a5208008594976d4627bcf01355fc08837592/tifffile/tifffile.py#L18391-L18415
+    - '*.zip'
     - '*.tiff'
     - '*.tif'
-    - '*.zip'
-    accepts_directories: true
+    - '*.ome.tif'
+    - '*.lsm'
+    - '*.stk'
+    - '*.qpi'
+    - '*.pcoraw'
+    - '*.qptiff'
+    - '*.ptiff'
+    - '*.ptif'
+    - '*.gel'
+    - '*.seq'
+    - '*.svs'
+    - '*.scn'
+    - '*.zif'
+    - '*.ndpi'
+    - '*.bif'
+    - '*.tf8'
+    - '*.tf2'
+    - '*.btf'
+    - '*.eer'

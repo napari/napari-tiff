@@ -80,7 +80,7 @@ def example_data_multiresolution(tmp_path):
     This example code reproduced from tifffile.py, see:
     https://github.com/cgohlke/tifffile/blob/2b5a5208008594976d4627bcf01355fc08837592/tifffile/tifffile.py#L649-L688
     """
-    example_data_filepath = str(tmp_path / "'test-pyramid.ome.tif'")
+    example_data_filepath = str(tmp_path / "test-pyramid.ome.tif")
     data = np.random.randint(0, 255, (8, 2, 512, 512, 3), 'uint8')
     subresolutions = 2  # so 3 resolution levels in total
     pixelsize = 0.29  # micrometer

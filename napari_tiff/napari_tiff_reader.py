@@ -9,10 +9,10 @@ see: https://napari.org/docs/plugins/hook_specifications.html
 Replace code below accordingly.  For complete documentation see:
 https://napari.org/docs/plugins/for_plugin_developers.html
 """
-from typing import List, Optional, Union, Any, Tuple, Dict, Callable
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import numpy
-from tifffile import TiffFile, TiffSequence, TIFF, xml2dict
+from tifffile import TIFF, TiffFile, TiffSequence, xml2dict
 
 from napari_tiff.napari_tiff_metadata import get_metadata
 

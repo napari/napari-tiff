@@ -1,10 +1,12 @@
 import numpy as np
 import pytest
-from tifffile import xml2dict, imwrite, TiffFile
+from tifffile import TiffFile, imwrite, xml2dict
 
-from napari_tiff.napari_tiff_reader import tifffile_reader
+from napari_tiff._tests.test_data import (example_data_imagej,
+                                          example_data_ometiff,
+                                          imagej_hyperstack_image)
 from napari_tiff.napari_tiff_metadata import get_extra_metadata
-from napari_tiff._tests.test_data import example_data_imagej, example_data_ometiff, imagej_hyperstack_image
+from napari_tiff.napari_tiff_reader import tifffile_reader
 
 
 @pytest.mark.parametrize("data_fixture, original_data, metadata_type", [

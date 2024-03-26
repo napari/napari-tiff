@@ -4,16 +4,14 @@ import pytest
 import tifffile
 
 from napari_tiff import napari_get_reader
+from napari_tiff._tests.test_data import (example_data_filepath,
+                                          example_data_imagej,
+                                          example_data_multiresolution,
+                                          example_data_ometiff,
+                                          example_data_tiff,
+                                          example_data_zipped_filepath)
 from napari_tiff.napari_tiff_reader import (imagecodecs_reader,
                                             tifffile_reader, zip_reader)
-from napari_tiff._tests.test_data import (
-    example_data_filepath,
-    example_data_zipped_filepath,
-    example_data_tiff,
-    example_data_imagej,
-    example_data_ometiff,
-    example_data_multiresolution,
-)
 
 
 def test_get_reader_pass():

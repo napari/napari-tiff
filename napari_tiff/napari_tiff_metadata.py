@@ -1,9 +1,11 @@
-import numpy
-from tifffile import xml2dict, PHOTOMETRIC, TiffFile
 from typing import Any
+
+import numpy
+from tifffile import PHOTOMETRIC, TiffFile, xml2dict
 from vispy.color import Colormap
 
-from napari_tiff.napari_tiff_colormaps import alpha_colormap, cmyk_colormaps, int_to_rgba, rgb_colormaps
+from napari_tiff.napari_tiff_colormaps import (alpha_colormap, cmyk_colormaps,
+                                               int_to_rgba, rgb_colormaps)
 
 
 def get_metadata(tif: TiffFile) -> dict[str, Any]:

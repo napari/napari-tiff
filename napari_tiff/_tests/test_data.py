@@ -40,6 +40,35 @@ def example_data_ometiff(tmp_path, original_data):
     return tifffile.TiffFile(example_data_filepath)
 
 
+@pytest.fixture(scope="session")
+def imagej_hyperstack_image(tmp_path_factory):
+    """ImageJ hyperstack tiff image.
+
+    Write a 10 fps time series of volumes with xyz voxel size 2.6755x2.6755x3.9474
+    micron^3 to an ImageJ hyperstack formatted TIFF file:
+    """
+    filename = tmp_path_factory.mktemp("data") / "imagej_hyperstack.tif"
+
+    volume = np.random.randn(6, 57, 256, 256).astype('float32')
+    image_labels = [f'{i}' for i in range(volume.shape[0] * volume.shape[1])]
+    metadata = {
+            'spacing': 3.947368,
+            'unit': 'um',
+            'finterval': 1/10,
+            'fps': 10.0,
+            'axes': 'TZYX',
+            'Labels': image_labels,
+        }
+    tifffile.imwrite(
+        filename,
+        volume,
+        imagej=True,
+        resolution=(1./2.6755, 1./2.6755),
+        metadata=metadata,
+    )
+    return (filename, metadata)
+
+
 @pytest.fixture
 def example_data_multiresolution(tmp_path):
     """Example multi-resolution tiff file.

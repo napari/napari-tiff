@@ -11,7 +11,8 @@ https://napari.org/docs/plugins/for_plugin_developers.html
 """
 from typing import List, Optional, Union, Any, Tuple, Dict, Callable
 
-from tifffile import TiffFile, TiffSequence, TIFF
+import numpy
+from tifffile import TiffFile, TiffSequence, TIFF, xml2dict
 
 from napari_tiff.napari_tiff_metadata import get_metadata
 
@@ -68,7 +69,7 @@ def zip_reader(path: PathLike) -> List[LayerData]:
     return [(data, {}, 'image')]
 
 
-def tifffile_reader(tif):
+def tifffile_reader(tif: TiffFile) -> List[LayerData]:
     """Return napari LayerData from image series in TIFF file."""
     nlevels = len(tif.series[0].levels)
     if nlevels > 1:
@@ -88,7 +89,7 @@ def tifffile_reader(tif):
     return [(data, metadata_kwargs, 'image')]
 
 
-def imagecodecs_reader(path):
+def imagecodecs_reader(path: PathLike):
     """Return napari LayerData from first page in TIFF file."""
     from imagecodecs import imread
     return [(imread(path), {}, 'image')]

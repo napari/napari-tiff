@@ -1,6 +1,7 @@
 import dask.array as da
 import numpy as np
 import pytest
+import tifffile
 
 from napari_tiff import napari_get_reader
 from napari_tiff.napari_tiff_reader import (imagecodecs_reader,

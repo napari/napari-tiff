@@ -12,7 +12,7 @@ https://napari.org/docs/plugins/for_plugin_developers.html
 from typing import List, Optional, Union, Any, Tuple, Dict, Callable
 
 import numpy
-from tifffile import TiffFile, TiffSequence, TIFF
+from tifffile import TiffFile, TiffSequence, TIFF, xml2dict
 from vispy.color import Colormap
 
 LayerData = Union[Tuple[Any], Tuple[Any, Dict], Tuple[Any, Dict, str]]
@@ -71,7 +71,7 @@ def zip_reader(path: PathLike) -> List[LayerData]:
     return [(data, {}, 'image')]
 
 
-def tifffile_reader(tif):
+def tifffile_reader(tif: TiffFile):
     """Return napari LayerData from largest image series in TIFF file."""
     # TODO: fix (u)int32/64
     # TODO: handle complex
@@ -199,6 +199,8 @@ def tifffile_reader(tif):
         if channel_axis is not None and shape[channel_axis] > 1:
             contrast_limits = [contrast_limits] * shape[channel_axis]
 
+    metadata_dict = get_tiff_metadata(tif)
+
     kwargs = dict(
         rgb=rgb,
         channel_axis=channel_axis,
@@ -208,11 +210,12 @@ def tifffile_reader(tif):
         contrast_limits=contrast_limits,
         blending=blending,
         visible=visible,
+        metadata=metadata_dict,
     )
     return [(data, kwargs, 'image')]
 
 
-def imagej_reader(tif):
+def imagej_reader(tif: TiffFile):
     """Return napari LayerData from ImageJ hyperstack."""
     # TODO: ROI overlays
     ijmeta = tif.imagej_metadata
@@ -289,6 +292,8 @@ def imagej_reader(tif):
     else:
         scale = tuple(scale.get(x, 1.0) for x in axes if x not in 'CS')
 
+    metadata_dict = get_tiff_metadata(tif)
+
     kwargs = dict(
         rgb=rgb,
         channel_axis=channel_axis,
@@ -298,14 +303,34 @@ def imagej_reader(tif):
         contrast_limits=contrast_limits,
         blending=blending,
         visible=visible,
+        metadata=metadata_dict,
     )
     return [(data, kwargs, 'image')]
 
 
-def imagecodecs_reader(path):
+def imagecodecs_reader(path: PathLike):
     """Return napari LayerData from first page in TIFF file."""
     from imagecodecs import imread
     return [(imread(path), {}, 'image')]
+
+
+def get_tiff_metadata(tif: TiffFile) -> dict[str, Any]:
+    """Return any non-empty tif metadata properties as a dictionary."""
+    metadata_dict = {}
+    empty_metadata_values = [None, '', (), []]
+    for name in dir(tif.__class__):
+        obj = getattr(tif.__class__, name)
+        if 'metadata' in name:
+            metadata_value = obj.__get__(tif)
+            if metadata_value not in empty_metadata_values:
+                print(metadata_value)
+                if isinstance(metadata_value, str):
+                    try:
+                        metadata_value = xml2dict(metadata_value)
+                    except Exception:
+                        pass
+                metadata_dict[name] = metadata_value
+    return metadata_dict
 
 
 def alpha_colormap(bitspersample=8, samples=4):

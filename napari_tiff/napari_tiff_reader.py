@@ -73,6 +73,7 @@ def tifffile_reader(tif):
     nlevels = len(tif.series[0].levels)
     if nlevels > 1:
         import dask.array as da
+        import zarr
         data = []
         for level in range(nlevels):
             level_data = da.from_zarr(tif.aszarr(level=level))

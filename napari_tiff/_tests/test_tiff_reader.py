@@ -4,14 +4,19 @@ import pytest
 import tifffile
 
 from napari_tiff import napari_get_reader
-from napari_tiff._tests.test_data import (example_data_filepath,
-                                          example_data_imagej,
-                                          example_data_multiresolution,
-                                          example_data_ometiff,
-                                          example_data_tiff,
-                                          example_data_zipped_filepath)
-from napari_tiff.napari_tiff_reader import (imagecodecs_reader,
-                                            tifffile_reader, zip_reader)
+from napari_tiff._tests.test_data import (
+    example_data_filepath,
+    example_data_imagej,
+    example_data_multiresolution,
+    example_data_ometiff,
+    example_data_tiff,
+    example_data_zipped_filepath,
+)
+from napari_tiff.napari_tiff_reader import (
+    imagecodecs_reader,
+    tifffile_reader,
+    zip_reader,
+)
 
 
 def test_get_reader_pass():
@@ -20,10 +25,13 @@ def test_get_reader_pass():
     assert reader is None
 
 
-@pytest.mark.parametrize("data_fixture, original_data", [
-    (example_data_filepath, np.random.random((20, 20))),
-    (example_data_zipped_filepath, np.random.random((20, 20))),
-    ])
+@pytest.mark.parametrize(
+    "data_fixture, original_data",
+    [
+        (example_data_filepath, np.random.random((20, 20))),
+        (example_data_zipped_filepath, np.random.random((20, 20))),
+    ],
+)
 def test_reader(tmp_path, data_fixture, original_data):
     """Test tiff reader with example data filepaths."""
 
@@ -46,13 +54,28 @@ def test_reader(tmp_path, data_fixture, original_data):
         np.testing.assert_allclose(original_data, layer_data_tuple[0])
 
 
-@pytest.mark.parametrize("reader, data_fixture, original_data", [
-    (imagecodecs_reader, example_data_filepath, np.random.random((20, 20))),
-    (tifffile_reader, example_data_imagej, np.random.randint(0, 255, size=(20, 20)).astype(np.uint8)),
-    (tifffile_reader, example_data_tiff, np.random.randint(0, 255, size=(20, 20)).astype(np.uint8)),
-    (tifffile_reader, example_data_ometiff, np.random.randint(0, 255, size=(20, 20)).astype(np.uint8)),
-    (zip_reader, example_data_zipped_filepath, np.random.random((20, 20))),
-    ])
+@pytest.mark.parametrize(
+    "reader, data_fixture, original_data",
+    [
+        (imagecodecs_reader, example_data_filepath, np.random.random((20, 20))),
+        (
+            tifffile_reader,
+            example_data_imagej,
+            np.random.randint(0, 255, size=(20, 20)).astype(np.uint8),
+        ),
+        (
+            tifffile_reader,
+            example_data_tiff,
+            np.random.randint(0, 255, size=(20, 20)).astype(np.uint8),
+        ),
+        (
+            tifffile_reader,
+            example_data_ometiff,
+            np.random.randint(0, 255, size=(20, 20)).astype(np.uint8),
+        ),
+        (zip_reader, example_data_zipped_filepath, np.random.random((20, 20))),
+    ],
+)
 def test_all_readers(reader, data_fixture, original_data, tmp_path):
     """Test each individual reader."""
     assert callable(reader)

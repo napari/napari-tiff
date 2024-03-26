@@ -9,6 +9,7 @@ see: https://napari.org/docs/plugins/hook_specifications.html
 Replace code below accordingly.  For complete documentation see:
 https://napari.org/docs/plugins/for_plugin_developers.html
 """
+
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import numpy
@@ -41,7 +42,7 @@ def napari_get_reader(path: PathLike) -> Optional[ReaderFunction]:
         # so we are only going to look at the first file.
         path = path[0]
     path = path.lower()
-    if path.endswith('zip'):
+    if path.endswith("zip"):
         return zip_reader
     for ext in TIFF.FILE_EXTENSIONS:
         if path.endswith(ext):
@@ -57,7 +58,7 @@ def reader_function(path: PathLike) -> List[LayerData]:
             layerdata = tifffile_reader(tif)
         except Exception as exc:
             # fallback to imagecodecs
-            log_warning(f'tifffile: {exc}')
+            log_warning(f"tifffile: {exc}")
             layerdata = imagecodecs_reader(path)
     return layerdata
 
@@ -66,7 +67,7 @@ def zip_reader(path: PathLike) -> List[LayerData]:
     """Return napari LayerData from sequence of TIFF in ZIP file."""
     with TiffSequence(container=path) as ims:
         data = ims.asarray()
-    return [(data, {}, 'image')]
+    return [(data, {}, "image")]
 
 
 def tifffile_reader(tif: TiffFile) -> List[LayerData]:
@@ -75,6 +76,7 @@ def tifffile_reader(tif: TiffFile) -> List[LayerData]:
     if nlevels > 1:
         import dask.array as da
         import zarr
+
         data = []
         for level in range(nlevels):
             level_data = da.from_zarr(tif.aszarr(level=level))
@@ -86,16 +88,18 @@ def tifffile_reader(tif: TiffFile) -> List[LayerData]:
 
     metadata_kwargs = get_metadata(tif)
 
-    return [(data, metadata_kwargs, 'image')]
+    return [(data, metadata_kwargs, "image")]
 
 
 def imagecodecs_reader(path: PathLike):
     """Return napari LayerData from first page in TIFF file."""
     from imagecodecs import imread
-    return [(imread(path), {}, 'image')]
+
+    return [(imread(path), {}, "image")]
 
 
 def log_warning(msg, *args, **kwargs):
     """Log message with level WARNING."""
     import logging
+
     logging.getLogger(__name__).warning(msg, *args, **kwargs)

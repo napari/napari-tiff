@@ -16,7 +16,7 @@ def example_data_zipped_filepath(tmp_path, original_data):
     example_tiff_filepath = str(tmp_path / "myfile.tif")
     tifffile.imwrite(example_tiff_filepath, original_data, imagej=False)
     example_zipped_filepath = str(tmp_path / "myfile.zip")
-    with zipfile.ZipFile(example_zipped_filepath, 'w') as myzip:
+    with zipfile.ZipFile(example_zipped_filepath, "w") as myzip:
         myzip.write(example_tiff_filepath)
     os.remove(example_tiff_filepath)  # not needed now the zip file is saved
     return example_zipped_filepath
@@ -49,21 +49,21 @@ def imagej_hyperstack_image(tmp_path_factory):
     """
     filename = tmp_path_factory.mktemp("data") / "imagej_hyperstack.tif"
 
-    volume = np.random.randn(6, 57, 256, 256).astype('float32')
-    image_labels = [f'{i}' for i in range(volume.shape[0] * volume.shape[1])]
+    volume = np.random.randn(6, 57, 256, 256).astype("float32")
+    image_labels = [f"{i}" for i in range(volume.shape[0] * volume.shape[1])]
     metadata = {
-            'spacing': 3.947368,
-            'unit': 'um',
-            'finterval': 1/10,
-            'fps': 10.0,
-            'axes': 'TZYX',
-            'Labels': image_labels,
-        }
+        "spacing": 3.947368,
+        "unit": "um",
+        "finterval": 1 / 10,
+        "fps": 10.0,
+        "axes": "TZYX",
+        "Labels": image_labels,
+    }
     tifffile.imwrite(
         filename,
         volume,
         imagej=True,
-        resolution=(1./2.6755, 1./2.6755),
+        resolution=(1.0 / 2.6755, 1.0 / 2.6755),
         metadata=metadata,
     )
     return (filename, metadata)
@@ -81,44 +81,44 @@ def example_data_multiresolution(tmp_path):
     https://github.com/cgohlke/tifffile/blob/2b5a5208008594976d4627bcf01355fc08837592/tifffile/tifffile.py#L649-L688
     """
     example_data_filepath = str(tmp_path / "test-pyramid.ome.tif")
-    data = np.random.randint(0, 255, (8, 2, 512, 512, 3), 'uint8')
+    data = np.random.randint(0, 255, (8, 2, 512, 512, 3), "uint8")
     subresolutions = 2  # so 3 resolution levels in total
     pixelsize = 0.29  # micrometer
     with tifffile.TiffWriter(example_data_filepath, bigtiff=True) as tif:
-        metadata={
-            'axes': 'TCYXS',
-            'SignificantBits': 8,
-            'TimeIncrement': 0.1,
-            'TimeIncrementUnit': 's',
-            'PhysicalSizeX': pixelsize,
-            'PhysicalSizeXUnit': 'µm',
-            'PhysicalSizeY': pixelsize,
-            'PhysicalSizeYUnit': 'µm',
-            'Channel': {'Name': ['Channel 1', 'Channel 2']},
-            'Plane': {'PositionX': [0.0] * 16, 'PositionXUnit': ['µm'] * 16}
+        metadata = {
+            "axes": "TCYXS",
+            "SignificantBits": 8,
+            "TimeIncrement": 0.1,
+            "TimeIncrementUnit": "s",
+            "PhysicalSizeX": pixelsize,
+            "PhysicalSizeXUnit": "µm",
+            "PhysicalSizeY": pixelsize,
+            "PhysicalSizeYUnit": "µm",
+            "Channel": {"Name": ["Channel 1", "Channel 2"]},
+            "Plane": {"PositionX": [0.0] * 16, "PositionXUnit": ["µm"] * 16},
         }
         options = dict(
-            photometric='rgb',
+            photometric="rgb",
             tile=(128, 128),
-            compression='jpeg',
-            resolutionunit='CENTIMETER',
-            maxworkers=2
+            compression="jpeg",
+            resolutionunit="CENTIMETER",
+            maxworkers=2,
         )
         tif.write(
             data,
             subifds=subresolutions,
             resolution=(1e4 / pixelsize, 1e4 / pixelsize),
             metadata=metadata,
-            **options
+            **options,
         )
         # write pyramid levels to the two subifds
         # in production use resampling to generate sub-resolution images
         for level in range(subresolutions):
-            mag = 2**(level + 1)
+            mag = 2 ** (level + 1)
             tif.write(
                 data[..., ::mag, ::mag, :],
                 subfiletype=1,
                 resolution=(1e4 / mag / pixelsize, 1e4 / mag / pixelsize),
-                **options
+                **options,
             )
         return tifffile.TiffFile(example_data_filepath)

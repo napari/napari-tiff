@@ -6,5 +6,4 @@ except ImportError:
 # replace the asterisk with named imports
 from .napari_tiff_reader import napari_get_reader
 
-
 __all__ = ["napari_get_reader"]

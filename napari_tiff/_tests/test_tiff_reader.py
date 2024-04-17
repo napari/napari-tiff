@@ -1,7 +1,6 @@
-import dask.array as da
 import numpy as np
 import pytest
-import tifffile
+import zarr
 
 from napari_tiff import napari_get_reader
 from napari_tiff._tests.test_data import (
@@ -105,4 +104,4 @@ def test_multiresolution_image(example_data_multiresolution):
     assert layer_data[0].shape == (16, 512, 512, 3)
     assert layer_data[1].shape == (16, 256, 256, 3)
     assert layer_data[2].shape == (16, 128, 128, 3)
-    assert all([isinstance(level, da.Array) for level in layer_data])
+    assert all([isinstance(level, zarr.Array) for level in layer_data])

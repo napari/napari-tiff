@@ -12,7 +12,6 @@ https://napari.org/docs/plugins/for_plugin_developers.html
 
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
-import numpy
 from tifffile import TIFF, TiffFile, TiffSequence, xml2dict
 
 from napari_tiff.napari_tiff_metadata import get_metadata
@@ -74,15 +73,13 @@ def tifffile_reader(tif: TiffFile) -> List[LayerData]:
     """Return napari LayerData from image series in TIFF file."""
     nlevels = len(tif.series[0].levels)
     if nlevels > 1:
-        import dask.array as da
         import zarr
-
-        data = []
-        for level in range(nlevels):
-            level_data = da.from_zarr(tif.aszarr(level=level))
-            if level_data.chunksize == level_data.shape:
-                level_data = level_data.rechunk()
-            data.append(level_data)
+        store = tif.aszarr(multiscales=True)
+        group = zarr.hierarchy.group(store=store)
+        data = [arr for _, arr in group.arrays()]  # read-only zarr arrays
+        # assert array shapes are in descending order for napari multiscale image
+        shapes = [arr.shape for arr in data]
+        assert shapes == list(reversed(sorted(shapes)))
     else:
         data = tif.asarray()
 

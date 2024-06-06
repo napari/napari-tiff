@@ -201,7 +201,6 @@ def get_imagej_metadata(tif: TiffFile) -> dict[str, Any]:
     channel_axis = None
 
     name = None
-    scale = None
     colormap = None
     contrast_limits = None
     blending = None

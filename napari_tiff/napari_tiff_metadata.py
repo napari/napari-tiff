@@ -374,6 +374,7 @@ def get_value_units_micrometer(value: float, unit: str = None) -> float:
     unit_conversions = {
         "nm": 1e-3,
         "µm": 1,
+        "\\u00B5m": 1,  # Unicode 'MICRO SIGN' (U+00B5)
         "um": 1,
         "micrometer": 1,
         "mm": 1e3,

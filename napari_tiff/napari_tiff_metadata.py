@@ -35,9 +35,8 @@ def get_extra_metadata(tif: TiffFile) -> dict[str, Any]:
     metadata_dict = {}
     empty_metadata_values = [None, "", (), []]
     for name in dir(tif.__class__):
-        obj = getattr(tif.__class__, name)
         if "metadata" in name:
-            metadata_value = obj.__get__(tif)
+            metadata_value = getattr(tif.__class__, name).__get__(tif)
             if metadata_value not in empty_metadata_values:
                 print(metadata_value)
                 if isinstance(metadata_value, str):

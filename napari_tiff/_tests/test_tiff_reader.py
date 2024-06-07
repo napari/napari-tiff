@@ -1,48 +1,21 @@
-import os
-import zipfile
-
 import numpy as np
-from napari_tiff import napari_get_reader
-from napari_tiff.napari_tiff_reader import (imagecodecs_reader,
-                                            imagej_reader,
-                                            tifffile_reader,
-                                            zip_reader)
 import pytest
-import tifffile
+import zarr
 
-
-def example_data_filepath(tmp_path, original_data):
-    example_data_filepath = str(tmp_path / "example_data_filepath.tif")
-    tifffile.imwrite(example_data_filepath, original_data, imagej=False)
-    return example_data_filepath
-
-
-def example_data_tiff(tmp_path, original_data):
-    example_data_filepath = str(tmp_path / "example_data_tiff.tif")
-    tifffile.imwrite(example_data_filepath, original_data, imagej=False)
-    return tifffile.TiffFile(example_data_filepath)
-
-
-def example_data_imagej(tmp_path, original_data):
-    example_data_filepath = str(tmp_path / "example_data_imagej.tif")
-    tifffile.imwrite(example_data_filepath, original_data, imagej=True)
-    return tifffile.TiffFile(example_data_filepath)
-
-
-def example_data_ometiff(tmp_path, original_data):
-    example_data_filepath = str(tmp_path / "example_data_ometiff.ome.tif")
-    tifffile.imwrite(example_data_filepath, original_data, imagej=False)
-    return tifffile.TiffFile(example_data_filepath)
-
-
-def example_data_zipped(tmp_path, original_data):
-    example_tiff_filepath = str(tmp_path / "myfile.tif")
-    tifffile.imwrite(example_tiff_filepath, original_data)
-    example_zipped_filepath = str(tmp_path / "myfile.zip")
-    with zipfile.ZipFile(example_zipped_filepath, 'w') as myzip:
-        myzip.write(example_tiff_filepath)
-    os.remove(example_tiff_filepath)  # not needed now the zip file is saved
-    return example_zipped_filepath
+from napari_tiff import napari_get_reader
+from napari_tiff._tests.test_data import (
+    example_data_filepath,
+    example_data_imagej,
+    example_data_multiresolution,
+    example_data_ometiff,
+    example_data_tiff,
+    example_data_zipped_filepath,
+)
+from napari_tiff.napari_tiff_reader import (
+    imagecodecs_reader,
+    tifffile_reader,
+    zip_reader,
+)
 
 
 def test_get_reader_pass():
@@ -51,12 +24,15 @@ def test_get_reader_pass():
     assert reader is None
 
 
-@pytest.mark.parametrize("data_fixture, original_data", [
-    (example_data_filepath, np.random.random((20, 20))),
-    (example_data_zipped, np.random.random((20, 20))),
-    ])
+@pytest.mark.parametrize(
+    "data_fixture, original_data",
+    [
+        (example_data_filepath, np.random.random((20, 20))),
+        (example_data_zipped_filepath, np.random.random((20, 20))),
+    ],
+)
 def test_reader(tmp_path, data_fixture, original_data):
-    """An example of how you might test your plugin."""
+    """Test tiff reader with example data filepaths."""
 
     my_test_file = data_fixture(tmp_path, original_data)
 
@@ -71,19 +47,34 @@ def test_reader(tmp_path, data_fixture, original_data):
     assert isinstance(layer_data_tuple, tuple) and len(layer_data_tuple) > 0
 
     # make sure it's the same as it started
-    if data_fixture == example_data_zipped:  # zipfile has unsqueezed dimension
+    if data_fixture == example_data_zipped_filepath:  # zipfile has unsqueezed dimension
         np.testing.assert_allclose(original_data, layer_data_tuple[0][0])
     else:
         np.testing.assert_allclose(original_data, layer_data_tuple[0])
 
 
-@pytest.mark.parametrize("reader, data_fixture, original_data", [
-    (imagecodecs_reader, example_data_filepath, np.random.random((20, 20))),
-    (imagej_reader, example_data_imagej,  np.random.randint(0, 255, size=(20, 20)).astype(np.uint8)),
-    (tifffile_reader, example_data_tiff, np.random.randint(0, 255, size=(20, 20)).astype(np.uint8)),
-    (tifffile_reader, example_data_ometiff, np.random.randint(0, 255, size=(20, 20)).astype(np.uint8)),
-    (zip_reader, example_data_zipped, np.random.random((20, 20))),
-    ])
+@pytest.mark.parametrize(
+    "reader, data_fixture, original_data",
+    [
+        (imagecodecs_reader, example_data_filepath, np.random.random((20, 20))),
+        (
+            tifffile_reader,
+            example_data_imagej,
+            np.random.randint(0, 255, size=(20, 20)).astype(np.uint8),
+        ),
+        (
+            tifffile_reader,
+            example_data_tiff,
+            np.random.randint(0, 255, size=(20, 20)).astype(np.uint8),
+        ),
+        (
+            tifffile_reader,
+            example_data_ometiff,
+            np.random.randint(0, 255, size=(20, 20)).astype(np.uint8),
+        ),
+        (zip_reader, example_data_zipped_filepath, np.random.random((20, 20))),
+    ],
+)
 def test_all_readers(reader, data_fixture, original_data, tmp_path):
     """Test each individual reader."""
     assert callable(reader)
@@ -97,7 +88,20 @@ def test_all_readers(reader, data_fixture, original_data, tmp_path):
     assert isinstance(layer_data_tuple, tuple) and len(layer_data_tuple) > 0
 
     # make sure it's the same as it started
-    if data_fixture == example_data_zipped:  # zipfile has unsqueezed dimension
+    if data_fixture == example_data_zipped_filepath:  # zipfile has unsqueezed dimension
         np.testing.assert_allclose(original_data, layer_data_tuple[0][0])
     else:
         np.testing.assert_allclose(original_data, layer_data_tuple[0])
+
+
+def test_multiresolution_image(example_data_multiresolution):
+    """Test opening a multi-resolution image."""
+    assert example_data_multiresolution.series[0].is_pyramidal
+    layer_data_list = tifffile_reader(example_data_multiresolution)
+    layer_data_tuple = layer_data_list[0]
+    layer_data = layer_data_tuple[0]
+    assert len(layer_data) == 3
+    assert layer_data[0].shape == (16, 512, 512, 3)
+    assert layer_data[1].shape == (16, 256, 256, 3)
+    assert layer_data[2].shape == (16, 128, 128, 3)
+    assert all([isinstance(level, zarr.Array) for level in layer_data])

@@ -36,12 +36,9 @@ dependencies = [
 
 [project.optional-dependencies]
 testing = [
-   'pytest',
-]
-
-dev = [
-   'tox',
    'build',
+   'pytest',
+   'tox',
 ]
 
 [tools.setuptools]

@@ -2,8 +2,7 @@ from typing import Any
 
 import numpy
 from tifffile import PHOTOMETRIC, TiffFile, xml2dict
-from vispy.color import Colormap
-from napari.utils.colormaps import ALL_COLORMAPS
+from napari.utils.colormaps import ALL_COLORMAPS, Colormap
 
 from napari_tiff.napari_tiff_colormaps import alpha_colormap, int_to_rgba
 

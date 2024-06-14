@@ -3,13 +3,9 @@ from typing import Any
 import numpy
 from tifffile import PHOTOMETRIC, TiffFile, xml2dict
 from vispy.color import Colormap
+from napari.utils.colormaps import ALL_COLORMAPS
 
-from napari_tiff.napari_tiff_colormaps import (
-    alpha_colormap,
-    cmyk_colormaps,
-    int_to_rgba,
-    rgb_colormaps,
-)
+from napari_tiff.napari_tiff_colormaps import alpha_colormap, int_to_rgba
 
 
 def get_metadata(tif: TiffFile) -> dict[str, Any]:
@@ -75,7 +71,7 @@ def get_tiff_metadata(tif: TiffFile) -> dict[str, Any]:
         # CMYK
         channel_axis = axes.find("S")
         if channel_axis >= 0 and shape[channel_axis] >= 4:
-            colormap = cmyk_colormaps()
+            colormap = [ALL_COLORMAPS["cyan"], ALL_COLORMAPS["magenta"], ALL_COLORMAPS["yellow"], ALL_COLORMAPS["gray"]]
             name = ["Cyan", "Magenta", "Yellow", "Black"]
             visible = [False, False, False, True]
             blending = ["additive", "additive", "additive", "additive"]
@@ -243,7 +239,7 @@ def get_imagej_metadata(tif: TiffFile) -> dict[str, Any]:
             rgb = False
             n = shape[channel_axis]
             visible = [True, True, True]
-            colormap = rgb_colormaps(samples=4)[:n]
+            colormap = [ALL_COLORMAPS["red"], ALL_COLORMAPS["green"], ALL_COLORMAPS["blue"]]
             name = ["Red", "Green", "Blue", "Alpha"][:n]
             blending = ["additive", "additive", "additive", "translucent"][:n]
         else:

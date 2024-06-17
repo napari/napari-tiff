@@ -2,7 +2,7 @@ from typing import Any
 
 import numpy
 from tifffile import PHOTOMETRIC, TiffFile, xml2dict
-from napari.utils.colormaps import ALL_COLORMAPS, Colormap
+from napari.utils.colormaps import Colormap
 
 from napari_tiff.napari_tiff_colormaps import alpha_colormap, int_to_rgba
 
@@ -70,7 +70,7 @@ def get_tiff_metadata(tif: TiffFile) -> dict[str, Any]:
         # CMYK
         channel_axis = axes.find("S")
         if channel_axis >= 0 and shape[channel_axis] >= 4:
-            colormap = [ALL_COLORMAPS["cyan"], ALL_COLORMAPS["magenta"], ALL_COLORMAPS["yellow"], ALL_COLORMAPS["gray"]]
+            colormap = ["cyan", "magenta", "yellow", "gray"]
             name = ["Cyan", "Magenta", "Yellow", "Black"]
             visible = [False, False, False, True]
             blending = ["additive", "additive", "additive", "additive"]
@@ -238,7 +238,7 @@ def get_imagej_metadata(tif: TiffFile) -> dict[str, Any]:
             rgb = False
             n = shape[channel_axis]
             visible = [True, True, True]
-            colormap = [ALL_COLORMAPS["red"], ALL_COLORMAPS["green"], ALL_COLORMAPS["blue"]]
+            colormap = ["red", "green", "blue", alpha_colormap()]
             name = ["Red", "Green", "Blue", "Alpha"][:n]
             blending = ["additive", "additive", "additive", "translucent"][:n]
         else:

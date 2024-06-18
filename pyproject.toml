@@ -28,7 +28,6 @@ classifiers = [
 requires-python = '>=3.10'
 dependencies = [
    'imagecodecs',
-   'napari',
    'numpy',
    'tifffile>=2023.9.26',
    'zarr',

@@ -2,7 +2,6 @@ from typing import Any
 
 import numpy
 from tifffile import PHOTOMETRIC, TiffFile, xml2dict
-from napari.utils.colormaps import Colormap
 
 from napari_tiff.napari_tiff_colormaps import alpha_colormap, int_to_rgba
 
@@ -151,7 +150,7 @@ def get_tiff_metadata(tif: TiffFile) -> dict[str, Any]:
                 colormap = colormap / 65535.0
             else:
                 colormap = colormap / 255.0
-            colormap = Colormap(colormap.astype("float32").T)
+            colormap = colormap.astype("float32").T
 
     if colormap is None and page.photometric == 0:
         # MINISBLACK

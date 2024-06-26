@@ -7,7 +7,7 @@ def alpha_colormap(bitspersample=8, samples=4):
     ramp = numpy.linspace(0.0, 1.0, n).astype("float32")
     alpha_cmap = numpy.zeros((n, samples), dtype="float32")
     alpha_cmap[:, 3] = ramp[::-1]
-    return alpha_cmap
+    return {"name": "alpha",  "colors": alpha_cmap}
 
 
 def int_to_rgba(intrgba: int) -> tuple:

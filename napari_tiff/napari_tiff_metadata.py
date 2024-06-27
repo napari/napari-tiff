@@ -2,14 +2,8 @@ from typing import Any
 
 import numpy
 from tifffile import PHOTOMETRIC, TiffFile, xml2dict
-from vispy.color import Colormap
 
-from napari_tiff.napari_tiff_colormaps import (
-    alpha_colormap,
-    cmyk_colormaps,
-    int_to_rgba,
-    rgb_colormaps,
-)
+from napari_tiff.napari_tiff_colormaps import alpha_colormap, int_to_rgba
 
 
 def get_metadata(tif: TiffFile) -> dict[str, Any]:
@@ -62,7 +56,7 @@ def get_tiff_metadata(tif: TiffFile) -> dict[str, Any]:
     page = next(p for p in series.pages if p is not None)
     extrasamples = page.extrasamples
 
-    rgb = page.photometric in (2, 6) and shape[-1] in (3, 4)
+    rgb = page.photometric in (PHOTOMETRIC.RGB, PHOTOMETRIC.YCBCR) and shape[-1] in (3, 4)
     name = None
     scale = None
     colormap = None
@@ -71,18 +65,18 @@ def get_tiff_metadata(tif: TiffFile) -> dict[str, Any]:
     channel_axis = None
     visible = True
 
-    if page.photometric == 5:
+    if page.photometric == PHOTOMETRIC.SEPARATED:
         # CMYK
         channel_axis = axes.find("S")
         if channel_axis >= 0 and shape[channel_axis] >= 4:
-            colormap = cmyk_colormaps()
+            colormap = ["cyan", "magenta", "yellow", "gray"]
             name = ["Cyan", "Magenta", "Yellow", "Black"]
             visible = [False, False, False, True]
             blending = ["additive", "additive", "additive", "additive"]
             # TODO: use subtractive blending
         else:
             channel_axis = None
-    elif page.photometric in (2, 6) and (
+    elif page.photometric in (PHOTOMETRIC.RGB, PHOTOMETRIC.YCBCR) and (
         page.planarconfig == 2
         or (page.bitspersample > 8 and dtype.kind in "iu")
         or (extrasamples and len(extrasamples) > 1)
@@ -98,7 +92,7 @@ def get_tiff_metadata(tif: TiffFile) -> dict[str, Any]:
         else:
             channel_axis = None
     elif (
-        page.photometric in (0, 1)
+        page.photometric in (PHOTOMETRIC.MINISWHITE, PHOTOMETRIC.MINISBLACK)
         and extrasamples
         and any(sample > 0 for sample in extrasamples)
     ):
@@ -107,7 +101,7 @@ def get_tiff_metadata(tif: TiffFile) -> dict[str, Any]:
         if channel_axis >= 0:
             visible = [True]
             colormap = ["gray"]
-            name = ["Minisblack" if page.photometric == 1 else "Miniswhite"]
+            name = ["Minisblack" if page.photometric == PHOTOMETRIC.MINISBLACK else "Miniswhite"]
             blending = ["additive"]
         else:
             channel_axis = None
@@ -129,7 +123,7 @@ def get_tiff_metadata(tif: TiffFile) -> dict[str, Any]:
                 name.append("Alpha")
                 blending.append("translucent")
 
-    if channel_axis is None and page.photometric in (0, 1):
+    if channel_axis is None and page.photometric in (PHOTOMETRIC.MINISWHITE, PHOTOMETRIC.MINISBLACK):
         # separate up to 3 samples in grayscale images
         channel_axis = axes.find("S")
         if channel_axis >= 0 and 1 < shape[channel_axis] < 4:
@@ -149,23 +143,23 @@ def get_tiff_metadata(tif: TiffFile) -> dict[str, Any]:
         else:
             channel_axis = None
 
-        if page.photometric == 3 and page.colormap is not None:
+        if page.photometric == PHOTOMETRIC.PALETTE and page.colormap is not None:
             # PALETTE
             colormap = page.colormap
             if numpy.max(colormap) > 255:
                 colormap = colormap / 65535.0
             else:
                 colormap = colormap / 255.0
-            colormap = Colormap(colormap.astype("float32").T)
+            colormap = colormap.astype("float32").T
 
-    if colormap is None and page.photometric == 0:
-        # MINISBLACK
+    if colormap is None and page.photometric == PHOTOMETRIC.MINISWHITE:
+        # MINISWHITE
         colormap = "gray_r"
 
     if (
         contrast_limits is None
         and dtype.kind == "u"
-        and page.photometric != 3
+        and page.photometric != PHOTOMETRIC.PALETTE
         and page.bitspersample not in (8, 16, 32, 64)
     ):
         contrast_limits = (0, 2**page.bitspersample)
@@ -195,7 +189,7 @@ def get_imagej_metadata(tif: TiffFile) -> dict[str, Any]:
     axes = series.axes
     shape = series.shape
     page = series.pages[0]
-    rgb = page.photometric == 2 and shape[-1] in (3, 4)
+    rgb = page.photometric == PHOTOMETRIC.RGB and shape[-1] in (3, 4)
     mode = ijmeta.get("mode", None)
     channels = ijmeta.get("channels", 1)
     channel_axis = None
@@ -243,7 +237,7 @@ def get_imagej_metadata(tif: TiffFile) -> dict[str, Any]:
             rgb = False
             n = shape[channel_axis]
             visible = [True, True, True]
-            colormap = rgb_colormaps(samples=4)[:n]
+            colormap = ["red", "green", "blue", alpha_colormap()]
             name = ["Red", "Green", "Blue", "Alpha"][:n]
             blending = ["additive", "additive", "additive", "translucent"][:n]
         else:
@@ -331,7 +325,7 @@ def get_ome_tiff_metadata(tif: TiffFile) -> dict[str, Any]:
             colormap = int_to_rgba(int(color))
         elif is_rgb and len(channels) > 1:
             # separate channels provided for RGB (with missing color)
-            colormap = ["red", "green", "blue", "alpha"][channeli]
+            colormap = ["red", "green", "blue", alpha_colormap()][channeli]
             if not name:
                 name = colormap
 

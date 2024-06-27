@@ -12,7 +12,7 @@ https://napari.org/docs/plugins/for_plugin_developers.html
 
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
-from tifffile import TIFF, TiffFile, TiffSequence, xml2dict
+from tifffile import TIFF, TiffFile, TiffSequence
 
 from napari_tiff.napari_tiff_metadata import get_metadata
 

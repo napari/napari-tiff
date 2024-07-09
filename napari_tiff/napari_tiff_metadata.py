@@ -145,12 +145,14 @@ def get_tiff_metadata(tif: TiffFile) -> dict[str, Any]:
 
         if page.photometric == PHOTOMETRIC.PALETTE and page.colormap is not None:
             # PALETTE
-            colormap = page.colormap
-            if numpy.max(colormap) > 255:
-                colormap = colormap / 65535.0
+            colormap_values = page.colormap
+            if numpy.max(colormap_values) > 255:
+                colormap_values = colormap_values / 65535.0
             else:
-                colormap = colormap / 255.0
-            colormap = colormap.astype("float32").T
+                colormap_values = colormap_values / 255.0
+            colormap_values = colormap_values.astype("float32").T
+            colormap = {"name": "PALETTE",  "colors": colormap_values}
+
 
     if colormap is None and page.photometric == PHOTOMETRIC.MINISWHITE:
         # MINISWHITE

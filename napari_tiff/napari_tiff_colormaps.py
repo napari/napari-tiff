@@ -1,5 +1,7 @@
 import numpy
 
+CUSTOM_COLORMAPS = {}  # CUSTOM_COLORMAPS[colormap_hash] = colormap_name
+
 
 def alpha_colormap(bitspersample=8, samples=4):
     """Return Alpha colormap."""

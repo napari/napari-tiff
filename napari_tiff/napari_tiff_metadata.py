@@ -3,7 +3,7 @@ from typing import Any
 import numpy
 from tifffile import PHOTOMETRIC, TiffFile, xml2dict
 
-from napari_tiff.napari_tiff_colormaps import alpha_colormap, int_to_rgba
+from napari_tiff.napari_tiff_colormaps import alpha_colormap, int_to_rgba, CUSTOM_COLORMAPS
 
 
 def get_metadata(tif: TiffFile) -> dict[str, Any]:
@@ -151,8 +151,14 @@ def get_tiff_metadata(tif: TiffFile) -> dict[str, Any]:
             else:
                 colormap_values = colormap_values / 255.0
             colormap_values = colormap_values.astype("float32").T
-            colormap = {"name": "PALETTE",  "colors": colormap_values}
-
+            # set up custom colormap
+            colormap_hash = hash(tuple(tuple(x) for x in colormap_values))
+            if colormap_hash in CUSTOM_COLORMAPS:
+                colormap_name = CUSTOM_COLORMAPS[colormap_hash]
+            else:
+                colormap_name = "PALETTE: " + str(colormap_hash)
+                CUSTOM_COLORMAPS[colormap_hash] = colormap_name
+            colormap = {"name": colormap_name,  "colors": colormap_values}
 
     if colormap is None and page.photometric == PHOTOMETRIC.MINISWHITE:
         # MINISWHITE

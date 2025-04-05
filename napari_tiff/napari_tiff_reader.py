@@ -75,7 +75,7 @@ def tifffile_reader(tif: TiffFile) -> List[LayerData]:
     if nlevels > 1:
         import zarr
         store = tif.aszarr(multiscales=True)
-        group = zarr.hierarchy.group(store=store)
+        group = zarr.group(store=store)
         data = [arr for _, arr in group.arrays()]  # read-only zarr arrays
         # assert array shapes are in descending order for napari multiscale image
         shapes = [arr.shape for arr in data]

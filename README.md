@@ -3,7 +3,7 @@
 [![License](https://img.shields.io/pypi/l/napari-tiff.svg?color=green)](https://github.com/napari/napari-tiff/raw/master/LICENSE)
 [![PyPI](https://img.shields.io/pypi/v/napari-tiff.svg?color=green)](https://pypi.org/project/napari-tiff)
 [![Python Version](https://img.shields.io/pypi/pyversions/napari-tiff.svg?color=green)](https://python.org)
-[![tests](https://github.com/GenevieveBuckley/napari-tiff/workflows/tests/badge.svg)](https://github.com/GenevieveBuckley/napari-tiff/actions)
+[![tests](https://github.com/napari/napari-tiff/workflows/test-and-deploy/badge.svg)](https://github.com/napari/napari-tiff/actions)
 [![codecov](https://codecov.io/gh/GenevieveBuckley/napari-tiff/branch/master/graph/badge.svg)](https://codecov.io/gh/GenevieveBuckley/napari-tiff)
 
 A napari plugin for tiff images.

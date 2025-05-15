@@ -27,6 +27,7 @@ classifiers = [
 ]
 requires-python = '>=3.10'
 dependencies = [
+   'dask[array]>=2021.10.0',
    'imagecodecs',
    'numpy',
    'tifffile>=2023.9.26',

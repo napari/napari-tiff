@@ -4,7 +4,7 @@ site_author: Genevieve Buckley
 
 theme: readthedocs
 
-repo_url: https://github.com/GenevieveBuckley/napari-tiff
+repo_url: https://github.com/napari/napari-tiff
 
 pages:
 - Home: index.md

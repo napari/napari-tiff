@@ -3,8 +3,8 @@
 [![License](https://img.shields.io/pypi/l/napari-tiff.svg?color=green)](https://github.com/napari/napari-tiff/raw/master/LICENSE)
 [![PyPI](https://img.shields.io/pypi/v/napari-tiff.svg?color=green)](https://pypi.org/project/napari-tiff)
 [![Python Version](https://img.shields.io/pypi/pyversions/napari-tiff.svg?color=green)](https://python.org)
-[![tests](https://github.com/GenevieveBuckley/napari-tiff/workflows/tests/badge.svg)](https://github.com/GenevieveBuckley/napari-tiff/actions)
-[![codecov](https://codecov.io/gh/GenevieveBuckley/napari-tiff/branch/master/graph/badge.svg)](https://codecov.io/gh/GenevieveBuckley/napari-tiff)
+[![tests](https://github.com/napari/napari-tiff/workflows/test-and-deploy/badge.svg)](https://github.com/napari/napari-tiff/actions)
+[![codecov](https://codecov.io/gh/napari/napari-tiff/branch/main/graph/badge.svg)](https://codecov.io/gh/napari/napari-tiff)
 
 A napari plugin for tiff images.
 
@@ -50,7 +50,7 @@ If you encounter any problems, please [file an issue] along with a detailed desc
 [Apache Software License 2.0]: http://www.apache.org/licenses/LICENSE-2.0
 [Mozilla Public License 2.0]: https://www.mozilla.org/media/MPL/2.0/index.txt
 [cookiecutter-napari-plugin]: https://github.com/napari/cookiecutter-napari-plugin
-[file an issue]: https://github.com/GenevieveBuckley/napari-tiff/issues
+[file an issue]: https://github.com/napari/napari-tiff/issues
 [napari]: https://github.com/napari/napari
 [tox]: https://tox.readthedocs.io/en/latest/
 [pip]: https://pypi.org/project/pip/

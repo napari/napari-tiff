@@ -30,7 +30,7 @@ dependencies = [
    'imagecodecs',
    'numpy',
    # 2025.5.21 has moved to only zarr v3 for aszarr
-   'tifffile>=2023.9.26,<2025.5.21'
+   'tifffile>=2023.9.26,<2025.5.21',
    'zarr>=2,<3',
 ]
 

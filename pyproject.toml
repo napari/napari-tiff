@@ -28,7 +28,7 @@ classifiers = [
 requires-python = '>=3.10'
 dependencies = [
    'numpy',
-   'tifffile[codecs, zarr]',
+   'tifffile[codecs, zarr]>=2024.7.21',
 ]
 
 [project.optional-dependencies]

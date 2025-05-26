@@ -9,7 +9,6 @@ see: https://napari.org/docs/plugins/hook_specifications.html
 Replace code below accordingly.  For complete documentation see:
 https://napari.org/docs/plugins/for_plugin_developers.html
 """
-
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 from tifffile import TIFF, TiffFile, TiffSequence
@@ -75,8 +74,9 @@ def tifffile_reader(tif: TiffFile) -> List[LayerData]:
     if nlevels > 1:
         import zarr
         store = tif.aszarr(multiscales=True)
-        group = zarr.hierarchy.group(store=store)
-        data = [arr for _, arr in group.arrays()]  # read-only zarr arrays
+        group = zarr.open_group(store=store, mode='r')
+        # using group.attrs to get multiscales is recommended by cgohlke
+        data = [group[path_dict['path']] for path_dict in group.attrs['multiscales'][0]['datasets']]
         # assert array shapes are in descending order for napari multiscale image
         shapes = [arr.shape for arr in data]
         assert shapes == list(reversed(sorted(shapes)))

@@ -53,7 +53,7 @@ jobs:
       - name: Upload coverage data
         uses: actions/upload-artifact@v4
         with:
-          name: coverage reports ${{ matrix.platform }} py ${{ matrix.python-version }} ${{ matrix.tool }} ${{ matrix.napari }}
+          name: coverage reports ${{ matrix.platform }} py ${{ matrix.python }}
           include-hidden-files: true
           path: |
             ./.coverage.*

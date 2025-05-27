@@ -62,3 +62,15 @@ build-backend = 'setuptools.build_meta'
 
 [tool.setuptools_scm]
 write_to = 'napari_tiff/_version.py'
+
+[tool.coverage.run]
+omit = [
+    "*/_version.py",
+]
+
+[tool.coverage.paths]
+source = [
+    "napari_tiff/",
+    "*/napari_tiff/",
+    "*\\napari_tiff\\",
+]

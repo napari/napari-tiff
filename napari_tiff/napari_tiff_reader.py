@@ -75,10 +75,10 @@ def tifffile_reader(tif: TiffFile) -> List[LayerData]:
     if nlevels > 1:
         import zarr
         store = tif.aszarr(multiscales=True)
-        group = zarr.hierarchy.group(store=store)
-        # use dask and auto-rechunk, because some WSI use pathological chunk sizes (8, 3840, 3)
+        group = zarr.open_group(store=store, mode='r')
+        # using group.attrs to get multiscales is recommended by cgohlke
         # default dask chunk is 128MiB, so use 1 MiB, which is more reasonable for visualization
-        data = [da.from_zarr(arr, chunks=('1 MiB')) for _, arr in group.arrays()]
+        data = [da.from_zarr(group[path_dict['path']], chunks='1 MiB') for path_dict in group.attrs['multiscales'][0]['datasets']]
         # assert array shapes are in descending order for napari multiscale image
         shapes = [arr.shape for arr in data]
         assert shapes == list(reversed(sorted(shapes)))

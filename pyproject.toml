@@ -28,10 +28,8 @@ classifiers = [
 requires-python = '>=3.10'
 dependencies = [
    'dask[array]>=2021.10.0',
-   'imagecodecs',
    'numpy',
-   'tifffile>=2023.9.26',
-   'zarr>=2,<3',
+   'tifffile[codecs, zarr]>=2024.7.21',
 ]
 
 [project.optional-dependencies]
@@ -65,3 +63,15 @@ build-backend = 'setuptools.build_meta'
 
 [tool.setuptools_scm]
 write_to = 'napari_tiff/_version.py'
+
+[tool.coverage.run]
+omit = [
+    "*/_version.py",
+]
+
+[tool.coverage.paths]
+source = [
+    "napari_tiff/",
+    "*/napari_tiff/",
+    "*\\napari_tiff\\",
+]

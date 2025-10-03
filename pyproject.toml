@@ -1,3 +1,7 @@
+[build-system]
+requires = ['setuptools', 'setuptools_scm']
+build-backend = 'setuptools.build_meta'
+
 [project]
 name = 'napari-tiff'
 description = 'official napari tiff reader and writer.'
@@ -61,10 +65,6 @@ file = 'LICENSE'
 # documentation = ''
 source = 'https://github.com/napari/napari-tiff'
 tracker = 'https://github.com/napari/napari-tiff/issues'
-
-[build-system]
-requires = ['setuptools', 'setuptools_scm', 'wheel']
-build-backend = 'setuptools.build_meta'
 
 [tool.setuptools_scm]
 write_to = 'src/napari_tiff/_version.py'

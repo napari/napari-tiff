@@ -3,7 +3,7 @@ from typing import Any
 import numpy
 from tifffile import PHOTOMETRIC, TiffFile, xml2dict
 
-from src.napari_tiff.napari_tiff_colormaps import alpha_colormap, int_to_rgba, CUSTOM_COLORMAPS
+from napari_tiff.napari_tiff_colormaps import alpha_colormap, int_to_rgba, CUSTOM_COLORMAPS
 
 
 def get_metadata(tif: TiffFile) -> dict[str, Any]:

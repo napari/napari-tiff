@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 import zarr
 
-from src.napari_tiff import napari_get_reader
+from napari_tiff import napari_get_reader
 from base_data import (
     example_data_filepath,
     example_data_imagej,

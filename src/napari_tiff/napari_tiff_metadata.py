@@ -219,8 +219,7 @@ def get_imagej_metadata(tif: TiffFile) -> dict[str, Any]:
         channel_only = channels == ijmeta.get("images", 0)
 
         if "LUTs" in ijmeta:
-            print("aaaa", ijmeta["LUTs"])
-            colormap = np.array([(c.T / 255.0) for c in ijmeta["LUTs"]])
+            colormap = [(c.T / 255.0) for c in ijmeta["LUTs"]]
         elif mode == "grayscale":
             colormap = "gray"
         elif channels < 8:
@@ -238,7 +237,7 @@ def get_imagej_metadata(tif: TiffFile) -> dict[str, Any]:
             name = [f"Channel {i}" for i in range(channels)]
 
         if mode in ("color", "grayscale"):
-            blending = "opaque"
+            blending = "additive"
 
     elif axes[-1] == "S" and dtype == "uint16":
         # RGB >8-bit

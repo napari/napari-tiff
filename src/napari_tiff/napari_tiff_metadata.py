@@ -326,7 +326,7 @@ def get_ome_tiff_metadata(tif: TiffFile) -> dict[str, Any]:
     if pixel_size:
         scale = pixel_size
 
-    for channeli, channel in enumerate(channels):
+    for channel_idx, channel in enumerate(channels):
         name = channel.get("Name")
         color = channel.get("Color")
         colormap = None
@@ -334,7 +334,7 @@ def get_ome_tiff_metadata(tif: TiffFile) -> dict[str, Any]:
             colormap = int_to_rgba(int(color))
         elif is_rgb and len(channels) > 1:
             # separate channels provided for RGB (with missing color)
-            colormap = ["red", "green", "blue", alpha_colormap()][channeli]
+            colormap = ["red", "green", "blue", alpha_colormap()][channel_idx]
             if not name:
                 name = colormap
 

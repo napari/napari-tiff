@@ -82,11 +82,11 @@ source = [
 [tool.coverage.paths]
 source = [
     "src/napari_tiff/",
-    "*/napari_tiff/",
-    "*\\napari_tiff\\",
+    "**/napari_tiff/",
+    "**\\napari_tiff\\",
 ]
 tests = [
     "tests/",
-    "*/napari-tiff/tests/",
-    "*\\napari-tiff\\tests\\",
+    "**/tests/",
+    "**\\tests\\",
 ]

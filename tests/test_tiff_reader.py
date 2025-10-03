@@ -2,8 +2,8 @@ import numpy as np
 import pytest
 import zarr
 
-from napari_tiff import napari_get_reader
-from napari_tiff._tests.test_data import (
+from src.napari_tiff import napari_get_reader
+from tests.test_data import (
     example_data_filepath,
     example_data_imagej,
     example_data_multiresolution,
@@ -11,7 +11,7 @@ from napari_tiff._tests.test_data import (
     example_data_tiff,
     example_data_zipped_filepath,
 )
-from napari_tiff.napari_tiff_reader import (
+from src.napari_tiff.napari_tiff_reader import (
     imagecodecs_reader,
     tifffile_reader,
     zip_reader,

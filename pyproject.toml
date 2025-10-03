@@ -19,6 +19,7 @@ classifiers = [
    'Programming Language :: Python :: 3.10',
    'Programming Language :: Python :: 3.11',
    'Programming Language :: Python :: 3.12',
+   'Programming Language :: Python :: 3.13',
    'Topic :: Software Development :: Libraries',
    'Topic :: Scientific/Engineering',
    'Programming Language :: Python :: Implementation :: CPython',
@@ -31,11 +32,16 @@ dependencies = [
    'tifffile[codecs, zarr]>=2024.7.21',
 ]
 
-[project.optional-dependencies]
+[dependency-groups]
 testing = [
-   'build',
+   'napari',
    'pytest',
+   'coverage',
+]
+tox = [
    'tox',
+   'tox-gh-actions',
+   'tox-uv',
 ]
 
 [tools.setuptools]
@@ -61,7 +67,7 @@ requires = ['setuptools', 'setuptools_scm', 'wheel']
 build-backend = 'setuptools.build_meta'
 
 [tool.setuptools_scm]
-write_to = 'napari_tiff/_version.py'
+write_to = 'src/napari_tiff/_version.py'
 
 [tool.coverage.run]
 omit = [

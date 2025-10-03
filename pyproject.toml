@@ -82,4 +82,6 @@ source = [
 ]
 tests = [
     "tests/*",
+    "*/napari-tiff/tests/",
+    "*\\napari-tiff\\tests\\",
 ]

@@ -76,7 +76,7 @@ omit = [
 
 [tool.coverage.paths]
 source = [
-    "napari_tiff/",
+    "src/napari_tiff/",
     "*/napari_tiff/",
     "*\\napari_tiff\\",
 ]

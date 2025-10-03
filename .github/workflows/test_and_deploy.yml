@@ -25,10 +25,16 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform: [ubuntu-latest, windows-latest, macos-latest]
+        platform: [ubuntu-latest]
         # test spec-0 earliest and latest Python versions
         # https://scientific-python.org/specs/spec-0000/
-        python: ["3.10", "3.12"]
+        python: ["3.10", "3.11", "3.12", "3.13"]
+        include:
+          - platform: macos-latest
+            python: "3.12"
+          - platform: windows-latest
+            python: "3.11"
+
 
     steps:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0

@@ -80,3 +80,6 @@ source = [
     "*/napari_tiff/",
     "*\\napari_tiff\\",
 ]
+tests = [
+    "tests/*",
+]

@@ -1,3 +1,6 @@
+.venv
+uv.lock
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -76,5 +79,5 @@ target/
 .DS_Store
 
 # written by setuptools_scm
-*/_version.py
+**/_version.py
 .idea/

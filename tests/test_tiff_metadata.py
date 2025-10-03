@@ -1,8 +1,8 @@
 import numpy as np
 import pytest
-from tifffile import TiffFile, imwrite, xml2dict
+from tifffile import TiffFile, xml2dict
 
-from napari_tiff._tests.test_data import (
+from base_data import (
     example_data_imagej,
     example_data_ometiff,
     imagej_hyperstack_image,

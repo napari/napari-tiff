@@ -112,7 +112,7 @@ def test_multiresolution_image(example_data_multiresolution):
     assert all([isinstance(level, zarr.Array) for level in layer_data])
 
 
-@pytest.mark.parametrize("file_name", ['test_imagej.tiff']) #, 'test_ome.tiff'])
+@pytest.mark.parametrize("file_name", ['test_imagej.tiff', 'test_ome.tiff'])
 def test_read_imagej_tiff(data_dir, file_name):
     """Test opening an ImageJ tiff."""
     viewer = ViewerModel()

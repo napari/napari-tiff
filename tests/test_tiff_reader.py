@@ -3,7 +3,7 @@ import pytest
 import zarr
 
 from napari_tiff import napari_get_reader
-from napari_tiff._tests.test_data import (
+from base_data import (
     example_data_filepath,
     example_data_imagej,
     example_data_multiresolution,

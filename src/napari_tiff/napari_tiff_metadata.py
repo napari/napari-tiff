@@ -1,3 +1,4 @@
+import contextlib
 from typing import Any
 
 import numpy
@@ -278,27 +279,50 @@ def get_imagej_metadata(tif: TiffFile) -> dict[str, Any]:
     return kwargs
 
 
+def get_scale_and_units_from_ome(pixels: dict[str, Any], axes: str, shape: tuple[int, ...]) -> tuple[list[float], list[str]]:
+    pixel_size = []
+    units = []
+
+    for i, ax in enumerate(axes):
+        if ax == "C":
+            continue
+        if ax == 'T':
+            if "TimeIncrement" not in pixels or "TimeIncrementUnit" not in pixels:
+                if shape[i] > 1:
+                    return [], []
+
+                pixel_size.append(1.0)
+                units.append('s')
+                continue
+
+            pixel_size.append(get_time_units_seconds(float(pixels["TimeIncrement"]), pixels["TimeIncrementUnit"]))
+            units.append('s')
+        else:
+            ax_ = ax.upper()
+            if f"PhysicalSize{ax_}" not in pixels or f"PhysicalSize{ax_}Unit" not in pixels:
+                if shape[i] > 1:
+                    return [], []
+
+                pixel_size.append(1.0)
+                units.append('µm')
+                continue
+            pixel_size.append(get_value_units_micrometer(float(pixels[f"PhysicalSize{ax_}"]), pixels[f"PhysicalSize{ax_}Unit"]))
+            units.append('µm')
+    return pixel_size, units
+
+
 def get_ome_tiff_metadata(tif: TiffFile) -> dict[str, Any]:
     ome_metadata = xml2dict(tif.ome_metadata).get("OME")
     image_metadata = ensure_list(ome_metadata.get("Image", {}))[0]
     pixels = image_metadata.get("Pixels", {})
 
-    pixel_size = []
-    size = float(pixels.get("PhysicalSizeX", 0))
-    if size > 0:
-        pixel_size.append(
-            get_value_units_micrometer(size, pixels.get("PhysicalSizeXUnit"))
-        )
-    size = float(pixels.get("PhysicalSizeY", 0))
-    if size > 0:
-        pixel_size.append(
-            get_value_units_micrometer(size, pixels.get("PhysicalSizeYUnit"))
-        )
-
     series = tif.series[0]
     shape = series.shape
     dtype = series.dtype
     axes = series.axes.lower().replace("s", "c")
+
+    pixel_size, units = get_scale_and_units_from_ome(pixels, axes, shape)
+
     if "c" in axes:
         channel_axis = axes.index("c")
         nchannels = shape[channel_axis]
@@ -369,6 +393,7 @@ def get_ome_tiff_metadata(tif: TiffFile) -> dict[str, Any]:
         contrast_limits=contrast_limits,
         blending=blendings,
         visible=visibles,
+        units=units or None,
     )
     return kwargs
 
@@ -389,6 +414,23 @@ def get_value_units_micrometer(value: float, unit: str = None) -> float:
     else:
         value_um = value
     return value_um
+
+def get_time_units_seconds(value: float, unit: str = None) -> float:
+    unit_conversions = {
+        "ns": 1e-9,
+        "µs": 1e-6,
+        "\\u00B5s": 1e-6,  # Unicode 'MICRO SIGN' (U+00B5)
+        "us": 1e-6,
+        "ms": 1e-3,
+        "s": 1,
+        "min": 60,
+        "h": 3600,
+    }
+    if unit:
+        value_s = value * unit_conversions.get(unit, 1)
+    else:
+        value_s = value
+    return value_s
 
 
 def ensure_list(x):

@@ -15,8 +15,13 @@ from napari_tiff.napari_tiff_reader import (
     imagecodecs_reader,
     tifffile_reader,
     zip_reader,
+    reader_function,
 )
 
+from napari.layers import Image
+from napari.components import ViewerModel
+
+from numpy.testing import assert_array_equal
 
 def test_get_reader_pass():
     """Test None is returned if file format is not recognized."""
@@ -105,3 +110,16 @@ def test_multiresolution_image(example_data_multiresolution):
     assert layer_data[1].shape == (16, 256, 256, 3)
     assert layer_data[2].shape == (16, 128, 128, 3)
     assert all([isinstance(level, zarr.Array) for level in layer_data])
+
+
+@pytest.mark.parametrize("file_name", ['test_imagej.tiff', 'test_ome.tiff'])
+def test_read_imagej_tiff(data_dir, file_name):
+    """Test opening an ImageJ tiff."""
+    viewer = ViewerModel()
+    layer_data_list = reader_function(data_dir / file_name)
+    for el in layer_data_list:
+        viewer.add_image(el[0], **el[1])
+    assert len(viewer.layers) == 2
+    assert isinstance(viewer.layers[0], Image)
+    assert_array_equal(viewer.layers[0].colormap.colors[-1], (1, 0, 0, 1))
+    assert_array_equal(viewer.layers[1].colormap.colors[-1], (0, 0, 1, 1))

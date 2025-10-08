@@ -265,6 +265,10 @@ def get_imagej_metadata(tif: TiffFile) -> dict[str, Any]:
         scale = tuple(scale.get(x, 1.0) for x in axes if x != "S")
     else:
         scale = tuple(scale.get(x, 1.0) for x in axes if x not in "CS")
+    if unit_str := ijmeta.get('unit'):
+        units = [unit_str.encode().decode('unicode-escape')] * len(scale)
+    else:
+        units = None
 
     kwargs = dict(
         rgb=rgb,
@@ -275,6 +279,7 @@ def get_imagej_metadata(tif: TiffFile) -> dict[str, Any]:
         contrast_limits=contrast_limits,
         blending=blending,
         visible=visible,
+        units=units,
     )
     return kwargs
 

@@ -309,7 +309,7 @@ def get_scale_and_units_from_ome(pixels: dict[str, Any], axes: str, shape: tuple
                     return [], []
 
                 pixel_size.append(1.0)
-                units.append('µm')
+                units.append('pixel')
                 continue
             pixel_size.append(get_value_units_micrometer(float(pixels[f"PhysicalSize{ax_}"]), pixels[f"PhysicalSize{ax_}Unit"]))
             units.append('µm')

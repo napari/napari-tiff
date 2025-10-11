@@ -2,6 +2,12 @@ import numpy as np
 import pytest
 import zarr
 
+import pint
+from napari.layers import Image
+from napari.components import ViewerModel
+from numpy.testing import assert_array_equal
+from pint.testing import assert_allclose
+
 from napari_tiff import napari_get_reader
 from base_data import (
     example_data_filepath,
@@ -18,10 +24,6 @@ from napari_tiff.napari_tiff_reader import (
     reader_function,
 )
 
-from napari.layers import Image
-from napari.components import ViewerModel
-
-from numpy.testing import assert_array_equal
 
 def test_get_reader_pass():
     """Test None is returned if file format is not recognized."""
@@ -113,7 +115,7 @@ def test_multiresolution_image(example_data_multiresolution):
 
 
 @pytest.mark.parametrize("file_name", ['test_imagej.tiff', 'test_ome.tiff'])
-def test_read_imagej_tiff(data_dir, file_name):
+def test_read_tiff_metadata(data_dir, file_name):
     """Test opening an ImageJ tiff."""
     viewer = ViewerModel()
     layer_data_list = reader_function(data_dir / file_name)
@@ -123,3 +125,6 @@ def test_read_imagej_tiff(data_dir, file_name):
     assert isinstance(viewer.layers[0], Image)
     assert_array_equal(viewer.layers[0].colormap.colors[-1], (1, 0, 0, 1))
     assert_array_equal(viewer.layers[1].colormap.colors[-1], (0, 0, 1, 1))
+    nm = pint.get_application_registry()['nm']
+    layer_scale = [x*y for x, y in zip(viewer.layers[0].scale, viewer.layers[0].units)]
+    assert_allclose(layer_scale, [210 * nm, 77 * nm, 77 * nm])

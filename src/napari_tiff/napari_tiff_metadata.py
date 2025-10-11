@@ -297,7 +297,7 @@ def get_scale_and_units_from_ome(pixels: dict[str, Any], axes: str, shape: tuple
                     return [], []
 
                 pixel_size.append(1.0)
-                units.append('s')
+                units.append('pixel')
                 continue
 
             pixel_size.append(get_time_units_seconds(float(pixels["TimeIncrement"]), pixels["TimeIncrementUnit"]))

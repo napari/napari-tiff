@@ -276,12 +276,12 @@ def get_imagej_metadata(tif: TiffFile) -> dict[str, Any]:
         rgb=rgb,
         channel_axis=channel_axis,
         name=name,
-        scale=scale_,
+        scale=tuple(scale_),
         colormap=colormap,
         contrast_limits=contrast_limits,
         blending=blending,
         visible=visible,
-        units=units,
+        units=tuple(units),
     )
     return kwargs
 

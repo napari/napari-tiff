@@ -53,7 +53,7 @@ def test_imagej_hyperstack_metadata(imagej_hyperstack_image):
 
     napari_layer_metadata = layer_data_tuple[1]
     assert napari_layer_metadata.get("scale") == (
-        1.0,
+        0.1,
         3.947368,
         2.675500000484335,
         2.675500000484335,

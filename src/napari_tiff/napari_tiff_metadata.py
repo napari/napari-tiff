@@ -260,20 +260,23 @@ def get_imagej_metadata(tif: TiffFile) -> dict[str, Any]:
     if res is not None:
         scale["Y"] = res.value[1] / max(res.value[0], 1)
     scale["Z"] = abs(ijmeta.get("spacing", 1.0))
-    if channel_axis is None:
-        scale = tuple(scale.get(x, 1.0) for x in axes if x != "S")
-    else:
-        scale = tuple(scale.get(x, 1.0) for x in axes if x not in "CS")
-    if unit_str := ijmeta.get('unit'):
-        units = [unit_str.encode().decode('unicode-escape')] * len(scale)
-    else:
-        units = None
+    scale["T"] = ijmeta.get("finterval", 1.0)
+    unit_str = ijmeta.get('unit', 'pixel').encode().decode('unicode-escape')
+    scale_ = []
+    units = []
+    for ax in (x for x in axes if x not in 'CS'):
+        if ax == 'T':
+            scale_.append(scale.get('T'))
+            units.append('s')
+        else:
+            scale_.append(scale.get(ax, 1.0))
+            units.append(unit_str)
 
     kwargs = dict(
         rgb=rgb,
         channel_axis=channel_axis,
         name=name,
-        scale=scale,
+        scale=scale_,
         colormap=colormap,
         contrast_limits=contrast_limits,
         blending=blending,
@@ -288,9 +291,9 @@ def get_scale_and_units_from_ome(pixels: dict[str, Any], axes: str, shape: tuple
     units = []
 
     for i, ax in enumerate(axes):
-        if ax == "C":
+        if ax == "c":
             continue
-        if ax == 'T':
+        if ax == 't':
             if "TimeIncrement" not in pixels or "TimeIncrementUnit" not in pixels:
                 if shape[i] > 1:
                     return [], []

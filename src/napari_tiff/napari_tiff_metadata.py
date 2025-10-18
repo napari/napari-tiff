@@ -33,7 +33,6 @@ def get_extra_metadata(tif: TiffFile) -> dict[str, Any]:
         if "metadata" in name:
             metadata_value = getattr(tif.__class__, name).__get__(tif)
             if metadata_value not in empty_metadata_values:
-                print(metadata_value)
                 if isinstance(metadata_value, str):
                     try:
                         metadata_value = xml2dict(metadata_value)

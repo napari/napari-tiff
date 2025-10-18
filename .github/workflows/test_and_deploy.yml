@@ -18,6 +18,11 @@ on:
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
+env:
+  COLUMNS: 120
+  FORCE_COLOR: 1
+
+
 jobs:
   test:
     name: ${{ matrix.platform }} py${{ matrix.python }}
@@ -25,33 +30,42 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform: [ubuntu-latest, windows-latest, macos-latest]
+        platform: [ubuntu-latest]
         # test spec-0 earliest and latest Python versions
         # https://scientific-python.org/specs/spec-0000/
-        python: ["3.10", "3.12"]
+        python: ["3.10", "3.11", "3.12", "3.13"]
+        include:
+          - platform: macos-latest
+            python: "3.12"
+          - platform: windows-latest
+            python: "3.11"
+
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
 
-      - name: Set up Python ${{ matrix.python }}
-        uses: actions/setup-python@v5
+      - name: Install the latest version of uv
+        uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e
         with:
+          version: "latest"
           python-version: ${{ matrix.python }}
+          activate-environment: true
 
-      # these libraries enable testing Qt on Linux
-      - uses: tlambert03/setup-qt-libs@v1
+      - name: Setup headless display
+        uses: pyvista/setup-headless-display-action@7d84ae825e6d9297a8e99bdbbae20d1b919a0b19 # v4.2
+        with:
+          qt: true
+          wm: herbstluftwm
 
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
-          python -m pip install tox-gh-actions
-          python -m pip install .[dev,testing]
+          uv sync --all-groups
 
       - name: Test with tox
         run: tox
 
       - name: Upload coverage data
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: coverage reports ${{ matrix.platform }} py ${{ matrix.python }}
           include-hidden-files: true
@@ -67,9 +81,9 @@ jobs:
     if: always()
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
         with:
           python-version: "3.x"
           cache-dependency-path: pyproject.toml
@@ -81,7 +95,7 @@ jobs:
           pip install codecov
 
       - name: Download coverage data
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5.0.0
         with:
           pattern: coverage reports*
           path: coverage
@@ -96,41 +110,38 @@ jobs:
           python -Im coverage report --format=markdown --skip-empty --skip-covered >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload coverage data
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@5a1091511ad55cbe89839c7260b706298ca349f7 # v5.5.1
         with:
           fail_ci_if_error: true
           use_oidc: ${{ github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository) }}
 
+  build-and-inspect-package:
+      name: Build & inspect package.
+      runs-on: ubuntu-latest
+
+      steps:
+        - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
+        - uses: hynek/build-and-inspect-python-package@c52c3a4710070b50470d903818a7b25115dcd076
+
   deploy:
-    needs: [test]
+    needs: [test, build-and-inspect-package]
     runs-on: ubuntu-latest
     if: contains(github.ref, 'tags')
     permissions:
       id-token: write
       contents: write
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Download built artifact to dist/
+        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0
         with:
-          python-version: "3.x"
-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install .[dev,testing]
-
-      - name: Build
-        run: |
-          git tag
-          python -m build
+          name: Packages
+          path: dist
 
       - name: Publish to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
+        uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e # v1.13.0
 
       - name: Publish to GitHub
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@6cbd405e2c4e67a21c47fa9e383d020e4e28b836 # v2.3.3
         with:
           tag_name: ${{ github.ref }}
           name: ${{ env.tag }}

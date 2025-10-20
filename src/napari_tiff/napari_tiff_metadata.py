@@ -294,28 +294,16 @@ def get_scale_and_units_from_ome(pixels: dict[str, Any], axes: str, shape: tuple
         if ax == "c":
             continue
         if ax == 't':
-            if "TimeIncrement" not in pixels:
-                if shape[i] > 1:
-                    return [], []
-
-                pixel_size.append(1.0)
-                units.append('pixel')
-                continue
-            time_unit = pixels.get("TimeIncrementUnit", "pixels")
-            pixel_size.append(get_time_units_seconds(float(pixels["TimeIncrement"]), time_unit))
-            units.append('s' if time_unit != 'pixels' else 'pixel')
+            time_increment = float(pixels.get("TimeIncrement", 1.0))
+            time_unit = pixels.get("TimeIncrementUnit", "pixel")
+            pixel_size.append(get_time_units_seconds(time_increment, time_unit))
+            units.append('s' if time_unit != 'pixel' else 'pixel')
         else:
             ax_ = ax.upper()
-            if f"PhysicalSize{ax_}" not in pixels:
-                if shape[i] > 1:
-                    return [], []
-
-                pixel_size.append(1.0)
-                units.append('pixel')
-                continue
-            spatial_unit = pixels.get(f"PhysicalSize{ax_}Unit", "pixels")
-            pixel_size.append(get_value_units_micrometer(float(pixels[f"PhysicalSize{ax_}"]), spatial_unit))
-            units.append('µm' if spatial_unit != 'pixels' else 'pixel')
+            physical_size = float(pixels.get(f"PhysicalSize{ax_}", 1.0))
+            spatial_unit = pixels.get(f"PhysicalSize{ax_}Unit", "pixel")
+            pixel_size.append(get_value_units_micrometer(physical_size, spatial_unit))
+            units.append('µm' if spatial_unit != 'pixel' else 'pixel')
     return pixel_size, units
 
 

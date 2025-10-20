@@ -82,9 +82,9 @@ def test_imagej_hyperstack_metadata(imagej_hyperstack_image):
     [
         (dict(pixels={"PhysicalSizeX": "0.1", "PhysicalSizeXUnit": "mm", "PhysicalSizeY": "0.2", "PhysicalSizeYUnit": "um"}, axes="xy", shape=(10, 10)), ([100, 0.2], ["µm", "µm"])),
         (dict(pixels={"PhysicalSizeX": "0.1", "PhysicalSizeXUnit": "mm", "PhysicalSizeY": "0.2", "PhysicalSizeYUnit": "um"}, axes="zxy", shape=(1, 10, 10)), ([1, 100, 0.2], ["pixel", "µm", "µm"])),
-        (dict(pixels={"PhysicalSizeX": "0.1", "PhysicalSizeXUnit": "mm", "PhysicalSizeY": "0.2", "PhysicalSizeYUnit": "um"}, axes="zyx", shape=(2, 10, 10)), ([], [])),
+        (dict(pixels={"PhysicalSizeX": "0.1", "PhysicalSizeXUnit": "mm", "PhysicalSizeY": "0.2", "PhysicalSizeYUnit": "um"}, axes="zyx", shape=(2, 10, 10)), ([1.0, 0.2, 100.0], ['pixel', 'µm', 'µm'])),
         (dict(pixels={"PhysicalSizeX": "0.1", "PhysicalSizeXUnit": "mm", "PhysicalSizeY": "0.2", "PhysicalSizeYUnit": "um"}, axes="txy", shape=(1, 10, 10)), ([1, 100, 0.2], ["pixel", "µm", "µm"])),
-        (dict(pixels={"PhysicalSizeX": "0.1", "PhysicalSizeXUnit": "mm", "PhysicalSizeY": "0.2", "PhysicalSizeYUnit": "um"}, axes="tyx", shape=(2, 10, 10)), ([], [])),
+        (dict(pixels={"PhysicalSizeX": "0.1", "PhysicalSizeXUnit": "mm", "PhysicalSizeY": "0.2", "PhysicalSizeYUnit": "um"}, axes="tyx", shape=(2, 10, 10)), ([1.0, 0.2, 100.0], ['pixel', 'µm', 'µm'])),
         (dict(pixels={"PhysicalSizeX": "0.1", "PhysicalSizeXUnit": "mm", "PhysicalSizeY": "0.2", "PhysicalSizeYUnit": "um", "TimeIncrement": "10", "TimeIncrementUnit": "s"}, axes="txy", shape=(2, 10, 10)), ([10, 100, 0.2], ["s", "µm", "µm"])),
         (dict(pixels={"PhysicalSizeX": "0.1", "PhysicalSizeXUnit": "mm", "PhysicalSizeY": "0.2", "PhysicalSizeYUnit": "um", "TimeIncrement": "10"}, axes="txy", shape=(2, 10, 10)), ([10, 100, 0.2], ["pixel", "µm", "µm"])),
         (dict(pixels={"PhysicalSizeX": "0.1", "PhysicalSizeXUnit": "mm", "PhysicalSizeY": "0.2", "PhysicalSizeYUnit": "um", "PhysicalSizeZ": "10"}, axes="zxy", shape=(2, 10, 10)), ([10, 100, 0.2], ["pixel", "µm", "µm"])),

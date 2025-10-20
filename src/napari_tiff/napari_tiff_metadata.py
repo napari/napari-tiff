@@ -294,27 +294,28 @@ def get_scale_and_units_from_ome(pixels: dict[str, Any], axes: str, shape: tuple
         if ax == "c":
             continue
         if ax == 't':
-            if "TimeIncrement" not in pixels or "TimeIncrementUnit" not in pixels:
+            if "TimeIncrement" not in pixels:
                 if shape[i] > 1:
                     return [], []
 
                 pixel_size.append(1.0)
                 units.append('pixel')
                 continue
-
-            pixel_size.append(get_time_units_seconds(float(pixels["TimeIncrement"]), pixels["TimeIncrementUnit"]))
-            units.append('s')
+            time_unit = pixels.get("TimeIncrementUnit", "pixels")
+            pixel_size.append(get_time_units_seconds(float(pixels["TimeIncrement"]), time_unit))
+            units.append('s' if time_unit != 'pixels' else 'pixel')
         else:
             ax_ = ax.upper()
-            if f"PhysicalSize{ax_}" not in pixels or f"PhysicalSize{ax_}Unit" not in pixels:
+            if f"PhysicalSize{ax_}" not in pixels:
                 if shape[i] > 1:
                     return [], []
 
                 pixel_size.append(1.0)
                 units.append('pixel')
                 continue
-            pixel_size.append(get_value_units_micrometer(float(pixels[f"PhysicalSize{ax_}"]), pixels[f"PhysicalSize{ax_}Unit"]))
-            units.append('µm')
+            spatial_unit = pixels.get(f"PhysicalSize{ax_}Unit", "pixels")
+            pixel_size.append(get_value_units_micrometer(float(pixels[f"PhysicalSize{ax_}"]), spatial_unit))
+            units.append('µm' if spatial_unit != 'pixels' else 'pixel')
     return pixel_size, units
 
 
@@ -416,7 +417,7 @@ def get_value_units_micrometer(value: float, unit: str = None) -> float:
         "cm": 1e4,
         "m": 1e6,
     }
-    if unit:
+    if unit and unit != "pixels":
         value_um = value * unit_conversions.get(unit, 1)
     else:
         value_um = value
@@ -433,7 +434,7 @@ def get_time_units_seconds(value: float, unit: str = None) -> float:
         "min": 60,
         "h": 3600,
     }
-    if unit:
+    if unit and unit != "pixels":
         value_s = value * unit_conversions.get(unit, 1)
     else:
         value_s = value

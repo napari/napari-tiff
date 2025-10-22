@@ -2,6 +2,13 @@ import numpy as np
 import pytest
 import zarr
 
+import pint
+from napari.layers import Image
+from napari.components import ViewerModel
+from napari.types import LayerDataTuple
+from numpy.testing import assert_array_equal
+from pint.testing import assert_allclose
+
 from napari_tiff import napari_get_reader
 from base_data import (
     example_data_filepath,
@@ -18,10 +25,14 @@ from napari_tiff.napari_tiff_reader import (
     reader_function,
 )
 
-from napari.layers import Image
-from napari.components import ViewerModel
 
-from numpy.testing import assert_array_equal
+def assert_units_allclose(first, second, msg: str | None = None) -> None:
+    for f, s in zip(first, second):
+        pint.testing.assert_allclose(f, s, msg=msg)
+
+def add_images_to_viewer(viewer: ViewerModel, layer_data_list: list[LayerDataTuple]) -> None:
+    for layer_data in layer_data_list:
+        viewer.add_image(layer_data[0], **layer_data[1])
 
 def test_get_reader_pass():
     """Test None is returned if file format is not recognized."""
@@ -112,14 +123,34 @@ def test_multiresolution_image(example_data_multiresolution):
     assert all([isinstance(level, zarr.Array) for level in layer_data])
 
 
-@pytest.mark.parametrize("file_name", ['test_imagej.tiff', 'test_ome.tiff'])
-def test_read_imagej_tiff(data_dir, file_name):
+@pytest.mark.parametrize("file_name", ['test_imagej.tiff', 'test_ome.tiff', 'test_imagej_with_time.tiff', 'test_ome_with_time.tiff'])
+def test_read_tiff_metadata_colormap(data_dir, file_name):
     """Test opening an ImageJ tiff."""
     viewer = ViewerModel()
     layer_data_list = reader_function(data_dir / file_name)
-    for el in layer_data_list:
-        viewer.add_image(el[0], **el[1])
+    add_images_to_viewer(viewer, layer_data_list)
     assert len(viewer.layers) == 2
     assert isinstance(viewer.layers[0], Image)
     assert_array_equal(viewer.layers[0].colormap.colors[-1], (1, 0, 0, 1))
     assert_array_equal(viewer.layers[1].colormap.colors[-1], (0, 0, 1, 1))
+
+@pytest.mark.parametrize("file_name", ['test_imagej.tiff', 'test_ome.tiff'])
+def test_read_tiff_metadata_units(data_dir, file_name):
+    viewer = ViewerModel()
+    layer_data_list = reader_function(data_dir / file_name)
+    add_images_to_viewer(viewer, layer_data_list)
+    nm = pint.get_application_registry()['nm']
+    layer_scale = [x*y for x, y in zip(viewer.layers[0].scale, viewer.layers[0].units)]
+    assert_units_allclose(layer_scale, [210 * nm, 77.5224855 * nm, 77.5224855 * nm])
+
+
+@pytest.mark.parametrize("file_name", ['test_imagej_with_time.tiff', 'test_ome_with_time.tiff'])
+def test_read_tiff_metadata_units_with_time(data_dir, file_name):
+    viewer = ViewerModel()
+    layer_data_list = reader_function(data_dir / file_name)
+    add_images_to_viewer(viewer, layer_data_list)
+    nm = pint.get_application_registry()['nm']
+    s = pint.get_application_registry()['s']
+    layer_scale = [x*y for x, y in zip(viewer.layers[0].scale[1:], viewer.layers[0].units[1:])]
+    pint.testing.assert_equal(viewer.layers[0].scale[0] * viewer.layers[0].units[0], 5 * s)
+    assert_units_allclose(layer_scale, [77.5224855 * nm, 77.5224855 * nm])

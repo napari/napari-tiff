@@ -1,3 +1,4 @@
+import contextlib
 from typing import Any
 
 import numpy
@@ -259,22 +260,51 @@ def get_imagej_metadata(tif: TiffFile) -> dict[str, Any]:
     if res is not None:
         scale["Y"] = res.value[1] / max(res.value[0], 1)
     scale["Z"] = abs(ijmeta.get("spacing", 1.0))
-    if channel_axis is None:
-        scale = tuple(scale.get(x, 1.0) for x in axes if x != "S")
-    else:
-        scale = tuple(scale.get(x, 1.0) for x in axes if x not in "CS")
+    scale["T"] = ijmeta.get("finterval", 1.0)
+    unit_str = ijmeta.get('unit', 'pixel').encode().decode('unicode-escape')
+    scale_ = []
+    units = []
+    for ax in (x for x in axes if x not in 'CS'):
+        if ax == 'T':
+            scale_.append(scale.get('T'))
+            units.append('s')
+        else:
+            scale_.append(scale.get(ax, 1.0))
+            units.append(unit_str)
 
     kwargs = dict(
         rgb=rgb,
         channel_axis=channel_axis,
         name=name,
-        scale=scale,
+        scale=tuple(scale_),
         colormap=colormap,
         contrast_limits=contrast_limits,
         blending=blending,
         visible=visible,
+        units=tuple(units),
     )
     return kwargs
+
+
+def get_scale_and_units_from_ome(pixels: dict[str, Any], axes: str, shape: tuple[int, ...]) -> tuple[list[float], list[str]]:
+    pixel_size = []
+    units = []
+
+    for i, ax in enumerate(axes):
+        if ax == "c":
+            continue
+        if ax == 't':
+            time_increment = float(pixels.get("TimeIncrement", 1.0))
+            time_unit = pixels.get("TimeIncrementUnit", "pixel")
+            pixel_size.append(get_time_units_seconds(time_increment, time_unit))
+            units.append('s' if time_unit != 'pixel' else 'pixel')
+        else:
+            ax_ = ax.upper()
+            physical_size = float(pixels.get(f"PhysicalSize{ax_}", 1.0))
+            spatial_unit = pixels.get(f"PhysicalSize{ax_}Unit", "pixel")
+            pixel_size.append(get_value_units_micrometer(physical_size, spatial_unit))
+            units.append('µm' if spatial_unit != 'pixel' else 'pixel')
+    return pixel_size, units
 
 
 def get_ome_tiff_metadata(tif: TiffFile) -> dict[str, Any]:
@@ -282,22 +312,13 @@ def get_ome_tiff_metadata(tif: TiffFile) -> dict[str, Any]:
     image_metadata = ensure_list(ome_metadata.get("Image", {}))[0]
     pixels = image_metadata.get("Pixels", {})
 
-    pixel_size = []
-    size = float(pixels.get("PhysicalSizeX", 0))
-    if size > 0:
-        pixel_size.append(
-            get_value_units_micrometer(size, pixels.get("PhysicalSizeXUnit"))
-        )
-    size = float(pixels.get("PhysicalSizeY", 0))
-    if size > 0:
-        pixel_size.append(
-            get_value_units_micrometer(size, pixels.get("PhysicalSizeYUnit"))
-        )
-
     series = tif.series[0]
     shape = series.shape
     dtype = series.dtype
     axes = series.axes.lower().replace("s", "c")
+
+    pixel_size, units = get_scale_and_units_from_ome(pixels, axes, shape)
+
     if "c" in axes:
         channel_axis = axes.index("c")
         nchannels = shape[channel_axis]
@@ -368,6 +389,7 @@ def get_ome_tiff_metadata(tif: TiffFile) -> dict[str, Any]:
         contrast_limits=contrast_limits,
         blending=blendings,
         visible=visibles,
+        units=units or None,
     )
     return kwargs
 
@@ -383,11 +405,28 @@ def get_value_units_micrometer(value: float, unit: str = None) -> float:
         "cm": 1e4,
         "m": 1e6,
     }
-    if unit:
+    if unit and unit != "pixels":
         value_um = value * unit_conversions.get(unit, 1)
     else:
         value_um = value
     return value_um
+
+def get_time_units_seconds(value: float, unit: str = None) -> float:
+    unit_conversions = {
+        "ns": 1e-9,
+        "µs": 1e-6,
+        "\\u00B5s": 1e-6,  # Unicode 'MICRO SIGN' (U+00B5)
+        "us": 1e-6,
+        "ms": 1e-3,
+        "s": 1,
+        "min": 60,
+        "h": 3600,
+    }
+    if unit and unit != "pixels":
+        value_s = value * unit_conversions.get(unit, 1)
+    else:
+        value_s = value
+    return value_s
 
 
 def ensure_list(x):

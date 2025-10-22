@@ -1,6 +1,6 @@
 import numpy as np
 import pytest
-import zarr
+import dask.array as da
 
 import pint
 from napari.layers import Image
@@ -120,7 +120,7 @@ def test_multiresolution_image(example_data_multiresolution):
     assert layer_data[0].shape == (16, 512, 512, 3)
     assert layer_data[1].shape == (16, 256, 256, 3)
     assert layer_data[2].shape == (16, 128, 128, 3)
-    assert all([isinstance(level, zarr.Array) for level in layer_data])
+    assert all([isinstance(level, da.core.Array) for level in layer_data])
 
 
 @pytest.mark.parametrize("file_name", ['test_imagej.tiff', 'test_ome.tiff', 'test_imagej_with_time.tiff', 'test_ome_with_time.tiff'])

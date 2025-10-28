@@ -274,6 +274,7 @@ def get_imagej_metadata(tif: TiffFile) -> dict[str, Any]:
 
     kwargs = dict(
         rgb=rgb,
+        axis_labels=axes.lower().replace("c", "").replace("s", ""),
         channel_axis=channel_axis,
         name=name,
         scale=tuple(scale_),
@@ -330,7 +331,7 @@ def get_ome_tiff_metadata(tif: TiffFile) -> dict[str, Any]:
     if len(channels) > nchannels:
         nchannels = len(channels)
 
-    is_rgb = series.keyframe.photometric == PHOTOMETRIC.RGB and nchannels in (3, 4)
+    is_rgb = series.keyframe.photometric == PHOTOMETRIC.RGB and nchannels in (3, 4) and axes[-1] == "c"
 
     if is_rgb:
         # channels_axis appears to be incompatible with RGB channels
@@ -383,6 +384,7 @@ def get_ome_tiff_metadata(tif: TiffFile) -> dict[str, Any]:
     kwargs = dict(
         rgb=is_rgb,
         channel_axis=channel_axis,
+        axis_labels=axes.replace("c", ""),
         name=names,
         scale=scale,
         colormap=colormaps,

@@ -37,7 +37,7 @@ dependencies = [
 ]
 
 [dependency-groups]
-testing = [
+dev = [
    'napari',
    'pytest',
    'coverage',

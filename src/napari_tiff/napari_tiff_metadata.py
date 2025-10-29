@@ -274,7 +274,7 @@ def get_imagej_metadata(tif: TiffFile) -> dict[str, Any]:
 
     kwargs = dict(
         rgb=rgb,
-        axis_labels=axes.lower().replace("c", "").replace("s", ""),
+        axis_labels=list(axes.lower().replace("c", "").replace("s", "")),
         channel_axis=channel_axis,
         name=name,
         scale=tuple(scale_),
@@ -297,14 +297,14 @@ def get_scale_and_units_from_ome(pixels: dict[str, Any], axes: str, shape: tuple
         if ax == 't':
             time_increment = float(pixels.get("TimeIncrement", 1.0))
             time_unit = pixels.get("TimeIncrementUnit", "pixel")
-            pixel_size.append(get_time_units_seconds(time_increment, time_unit))
-            units.append('s' if time_unit != 'pixel' else 'pixel')
+            pixel_size.append(time_increment)
+            units.append(time_unit)
         else:
             ax_ = ax.upper()
             physical_size = float(pixels.get(f"PhysicalSize{ax_}", 1.0))
             spatial_unit = pixels.get(f"PhysicalSize{ax_}Unit", "pixel")
-            pixel_size.append(get_value_units_micrometer(physical_size, spatial_unit))
-            units.append('µm' if spatial_unit != 'pixel' else 'pixel')
+            pixel_size.append(physical_size)
+            units.append(spatial_unit)
     return pixel_size, units
 
 
@@ -384,7 +384,7 @@ def get_ome_tiff_metadata(tif: TiffFile) -> dict[str, Any]:
     kwargs = dict(
         rgb=is_rgb,
         channel_axis=channel_axis,
-        axis_labels=axes.replace("c", ""),
+        axis_labels=list(axes.replace("c", "")),
         name=names,
         scale=scale,
         colormap=colormaps,

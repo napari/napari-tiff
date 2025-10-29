@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import os.path
 from typing import TYPE_CHECKING, Mapping, Literal
 from itertools import product
@@ -18,7 +20,7 @@ OME_UNITS_LENGTH: set[str] = {
     "Å",
     "thou", "li", "in", "ft", "yd", "mi",
     "ua", "ly", "pc",
-    "pt", "pixel", "reference frame",
+    "pt", "pixel", #"reference frame",
 }
 
 UNITS_TIME: set[str] = {
@@ -68,7 +70,7 @@ def _rgba_to_signed_int(rgba: tuple[np.int32, np.int32, np.int32, np.int32]) -> 
     return np.int32((r << 24) | (g << 16) | (b << 8) | a)
 
 
-def colormap_to_int(colormap: "Colormap") -> np.int32:
+def colormap_to_int(colormap: Colormap) -> np.int32:
     """Convert colormap to int32.
 
     Warnings
@@ -77,7 +79,7 @@ def colormap_to_int(colormap: "Colormap") -> np.int32:
     Need to be fixed in future
     """
 
-    last_color = tuple((colormap.colors[-1] * 255).astype(np.int32))
+    last_color = tuple((colormap["colors"][-1] * 255).astype(np.int32))
     return _rgba_to_signed_int(last_color)
 
 
@@ -86,7 +88,7 @@ def prepare_metadata(
         file_name: str,
         data_shape: tuple[int, ...],
         channel_names: list[str],
-        colormaps: list["Colormap"],
+        colormaps: list[Colormap],
 ) -> dict:
     """Prepare metadata for writing based on first layer metadata.
 
@@ -108,7 +110,7 @@ def prepare_metadata(
     dict
         Dictionary of OME metadata.
     """
-    axis_order = layer_metadata["axis_order"]
+    axis_order = determine_axis_order(layer_metadata)
     axis_position = {y: x for x, y in enumerate(axis_order)}
     axis_size = {y: data_shape[x] for x, y in enumerate(axis_order, start=1)}
     axis_to_unit = {}
@@ -171,7 +173,7 @@ def prepare_metadata(
 
 def determine_axis_order(layer_metadata: Mapping) -> list[Literal["c", "z", "t", "y", "x"]]:
     """Determine the axis order of an image based on metadata."""
-    axis_labels = layer_metadata["axis_labels"].lower()
+    axis_labels = [x.lower() for x in layer_metadata["axis_labels"]]
     units = layer_metadata["units"]
     if set(axis_labels).issubset("ctzyx"):
         return list(axis_labels)

@@ -396,41 +396,6 @@ def get_ome_tiff_metadata(tif: TiffFile) -> dict[str, Any]:
     return kwargs
 
 
-def get_value_units_micrometer(value: float, unit: str = None) -> float:
-    unit_conversions = {
-        "nm": 1e-3,
-        "µm": 1,
-        "\\u00B5m": 1,  # Unicode 'MICRO SIGN' (U+00B5)
-        "um": 1,
-        "micrometer": 1,
-        "mm": 1e3,
-        "cm": 1e4,
-        "m": 1e6,
-    }
-    if unit and unit != "pixels":
-        value_um = value * unit_conversions.get(unit, 1)
-    else:
-        value_um = value
-    return value_um
-
-def get_time_units_seconds(value: float, unit: str = None) -> float:
-    unit_conversions = {
-        "ns": 1e-9,
-        "µs": 1e-6,
-        "\\u00B5s": 1e-6,  # Unicode 'MICRO SIGN' (U+00B5)
-        "us": 1e-6,
-        "ms": 1e-3,
-        "s": 1,
-        "min": 60,
-        "h": 3600,
-    }
-    if unit and unit != "pixels":
-        value_s = value * unit_conversions.get(unit, 1)
-    else:
-        value_s = value
-    return value_s
-
-
 def ensure_list(x):
     if not isinstance(x, (list, tuple)):
         x = [x]

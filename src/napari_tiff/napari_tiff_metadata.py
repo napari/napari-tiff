@@ -293,7 +293,7 @@ def get_scale_translate_and_units_from_ome(pixels: dict[str, Any], axes: str, sh
     translate = []
     units = []
     reg = pint.get_application_registry()
-    plane_info = pixels.get("Plane")
+    plane_info = pixels.get("Plane", {})
     if isinstance(plane_info, list):
         plane_info = plane_info[0]
 

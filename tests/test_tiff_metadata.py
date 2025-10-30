@@ -80,14 +80,14 @@ def test_imagej_hyperstack_metadata(imagej_hyperstack_image):
 @pytest.mark.parametrize(
     "data,expected",
     [
-        (dict(pixels={"PhysicalSizeX": "0.1", "PhysicalSizeXUnit": "mm", "PhysicalSizeY": "0.2", "PhysicalSizeYUnit": "um"}, axes="xy", shape=(10, 10)), ([0.1, 0.2], ["mm", "um"])),
-        (dict(pixels={"PhysicalSizeX": "0.1", "PhysicalSizeXUnit": "mm", "PhysicalSizeY": "0.2", "PhysicalSizeYUnit": "um"}, axes="zxy", shape=(1, 10, 10)), ([1, 0.1, 0.2], ["pixel", "mm", "um"])),
-        (dict(pixels={"PhysicalSizeX": "0.1", "PhysicalSizeXUnit": "mm", "PhysicalSizeY": "0.2", "PhysicalSizeYUnit": "um"}, axes="zyx", shape=(2, 10, 10)), ([1.0, 0.2, 0.1], ['pixel', 'um', 'mm'])),
-        (dict(pixels={"PhysicalSizeX": "0.1", "PhysicalSizeXUnit": "mm", "PhysicalSizeY": "0.2", "PhysicalSizeYUnit": "um"}, axes="txy", shape=(1, 10, 10)), ([1, 0.1, 0.2], ["pixel", "mm", "um"])),
-        (dict(pixels={"PhysicalSizeX": "0.1", "PhysicalSizeXUnit": "mm", "PhysicalSizeY": "0.2", "PhysicalSizeYUnit": "um"}, axes="tyx", shape=(2, 10, 10)), ([1.0, 0.2, 0.1], ['pixel', 'um', 'mm'])),
-        (dict(pixels={"PhysicalSizeX": "0.1", "PhysicalSizeXUnit": "mm", "PhysicalSizeY": "0.2", "PhysicalSizeYUnit": "um", "TimeIncrement": "10", "TimeIncrementUnit": "s"}, axes="txy", shape=(2, 10, 10)), ([10, 0.1, 0.2], ["s", "mm", "um"])),
-        (dict(pixels={"PhysicalSizeX": "0.1", "PhysicalSizeXUnit": "mm", "PhysicalSizeY": "0.2", "PhysicalSizeYUnit": "um", "TimeIncrement": "10"}, axes="txy", shape=(2, 10, 10)), ([10, 0.1, 0.2], ["pixel", "mm", "um"])),
-        (dict(pixels={"PhysicalSizeX": "0.1", "PhysicalSizeXUnit": "mm", "PhysicalSizeY": "0.2", "PhysicalSizeYUnit": "um", "PhysicalSizeZ": "10"}, axes="zxy", shape=(2, 10, 10)), ([10, 0.1, 0.2], ["pixel", "mm", "um"])),
+        (dict(pixels={"PhysicalSizeX": "0.1", "PhysicalSizeXUnit": "mm", "PhysicalSizeY": "0.2", "PhysicalSizeYUnit": "um"}, axes="xy", shape=(10, 10)), ([0.1, 0.2], [0, 0], ["mm", "um"])),
+        (dict(pixels={"PhysicalSizeX": "0.1", "PhysicalSizeXUnit": "mm", "PhysicalSizeY": "0.2", "PhysicalSizeYUnit": "um"}, axes="zxy", shape=(1, 10, 10)), ([1, 0.1, 0.2], [0, 0, 0], ["pixel", "mm", "um"])),
+        (dict(pixels={"PhysicalSizeX": "0.1", "PhysicalSizeXUnit": "mm", "PhysicalSizeY": "0.2", "PhysicalSizeYUnit": "um"}, axes="zyx", shape=(2, 10, 10)), ([1.0, 0.2, 0.1], [0, 0, 0], ['pixel', 'um', 'mm'])),
+        (dict(pixels={"PhysicalSizeX": "0.1", "PhysicalSizeXUnit": "mm", "PhysicalSizeY": "0.2", "PhysicalSizeYUnit": "um"}, axes="txy", shape=(1, 10, 10)), ([1, 0.1, 0.2], [0, 0, 0], ["pixel", "mm", "um"])),
+        (dict(pixels={"PhysicalSizeX": "0.1", "PhysicalSizeXUnit": "mm", "PhysicalSizeY": "0.2", "PhysicalSizeYUnit": "um"}, axes="tyx", shape=(2, 10, 10)), ([1.0, 0.2, 0.1], [0, 0, 0], ['pixel', 'um', 'mm'])),
+        (dict(pixels={"PhysicalSizeX": "0.1", "PhysicalSizeXUnit": "mm", "PhysicalSizeY": "0.2", "PhysicalSizeYUnit": "um", "TimeIncrement": "10", "TimeIncrementUnit": "s"}, axes="txy", shape=(2, 10, 10)), ([10, 0.1, 0.2], [0, 0, 0], ["s", "mm", "um"])),
+        (dict(pixels={"PhysicalSizeX": "0.1", "PhysicalSizeXUnit": "mm", "PhysicalSizeY": "0.2", "PhysicalSizeYUnit": "um", "TimeIncrement": "10"}, axes="txy", shape=(2, 10, 10)), ([10, 0.1, 0.2], [0, 0, 0], ["pixel", "mm", "um"])),
+        (dict(pixels={"PhysicalSizeX": "0.1", "PhysicalSizeXUnit": "mm", "PhysicalSizeY": "0.2", "PhysicalSizeYUnit": "um", "PhysicalSizeZ": "10"}, axes="zxy", shape=(2, 10, 10)), ([10, 0.1, 0.2], [0, 0, 0], ["pixel", "mm", "um"])),
     ]
 )
 def test_get_scale_and_units_from_ome(data, expected):

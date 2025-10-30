@@ -175,6 +175,8 @@ def get_tiff_metadata(tif: TiffFile) -> dict[str, Any]:
         if channel_axis is not None and shape[channel_axis] > 1:
             contrast_limits = [contrast_limits] * shape[channel_axis]
 
+    scale, units = get_scale_and_units_from_tiff(page, axes)
+
     kwargs = dict(
         rgb=rgb,
         channel_axis=channel_axis,
@@ -184,6 +186,7 @@ def get_tiff_metadata(tif: TiffFile) -> dict[str, Any]:
         contrast_limits=contrast_limits,
         blending=blending,
         visible=visible,
+        units=units,
     )
     return kwargs
 
@@ -429,6 +432,30 @@ def get_time_units_seconds(value: float, unit: str = None) -> float:
     else:
         value_s = value
     return value_s
+
+
+def get_scale_and_units_from_tiff(page, axes):
+    """Extract scale and units from TIFF tags using tifffile properties."""
+    scale_dict = {}
+    units_dict = {}
+
+    if page.resolutionunit == 1:
+        # 1 means no unit, but tifffile uses meter as the default
+        x_res, y_res = page.get_resolution()
+        units_dict["X"] = "pixel"
+        units_dict["Y"] = "pixel"
+    else:
+        x_res, y_res = page.get_resolution(unit='micrometer')
+        units_dict["X"] = "µm"
+        units_dict["Y"] = "µm"
+
+    scale_dict["X"] = 1.0 / x_res
+    scale_dict["Y"] = 1.0 / y_res
+
+    scale = tuple(scale_dict.get(ax, 1.0) for ax in axes if ax not in "CS")
+    units = tuple(units_dict.get(ax, "pixel") for ax in axes if ax not in "CS")
+
+    return scale, units
 
 
 def ensure_list(x):

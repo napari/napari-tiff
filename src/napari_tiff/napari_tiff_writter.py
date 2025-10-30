@@ -94,7 +94,7 @@ def prepare_metadata(
 
     Parameters
     ----------
-    layer_metadata: dict
+    layer_metadata: Mapping
         Dictionary of napari layer metadata.
     file_name: str
         Name of the file that will be written to, without extension.
@@ -154,8 +154,8 @@ def prepare_metadata(
         pixels["PhysicalSizeZ"] = scale[axis_position['z']]
         pixels["PhysicalSizeZUnit"] = axis_to_unit['z']
     if "t" in axis_position:
-        pixels["PhysicalSizeT"] = scale[axis_position['t']]
-        pixels["PhysicalSizeTUnit"] = axis_to_unit['t']
+        pixels["TimeIncrement"] = scale[axis_position['t']]
+        pixels["TimeIncrementUnit"] = axis_to_unit['t']
 
     metadata = {
         "Pixels": pixels,
@@ -163,9 +163,9 @@ def prepare_metadata(
         "Creator": "napari-tiff",
         "Channel": {
             "Name": channel_names,
-            "axes": list(axis_order),
             "Color": [colormap_to_int(c) for c in colormaps],
-        }
+        },
+        "axes": "".join(['c'] + list(axis_order)).upper(),
     }
     metadata["Name"] = file_name
     return metadata
@@ -186,7 +186,14 @@ def determine_axis_order(layer_metadata: Mapping) -> list[Literal["c", "z", "t",
             return ["y", "x"]
         elif len(units) == 3:
             return ["z", "y", "x"]
-    raise ValueError("Cannot determine axis order")
+
+    if s.is_compatible_with(units[0]) and all(mm.is_compatible_with(x) for x in units[1:]):
+        if len(units) == 3:
+            return ["t", "y", "x"]
+        elif len(units) == 4:
+            return ["t", "z", "y", "x"]
+
+    raise ValueError("Cannot determine axis order")  # pragma: no cover
 
 
 

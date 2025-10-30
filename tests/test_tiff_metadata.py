@@ -7,7 +7,7 @@ from base_data import (
     example_data_ometiff,
     imagej_hyperstack_image,
 )
-from napari_tiff.napari_tiff_metadata import get_extra_metadata, get_scale_and_units_from_ome
+from napari_tiff.napari_tiff_metadata import get_extra_metadata, get_scale_translate_and_units_from_ome
 from napari_tiff.napari_tiff_reader import tifffile_reader
 
 
@@ -91,4 +91,4 @@ def test_imagej_hyperstack_metadata(imagej_hyperstack_image):
     ]
 )
 def test_get_scale_and_units_from_ome(data, expected):
-    assert get_scale_and_units_from_ome(**data) == expected
+    assert get_scale_translate_and_units_from_ome(**data) == expected

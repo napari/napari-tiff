@@ -3,6 +3,7 @@ from typing import Any
 
 import numpy
 import numpy as np
+import pint
 from tifffile import PHOTOMETRIC, TiffFile, xml2dict
 
 from napari_tiff.napari_tiff_colormaps import alpha_colormap, int_to_rgba, CUSTOM_COLORMAPS
@@ -287,9 +288,14 @@ def get_imagej_metadata(tif: TiffFile) -> dict[str, Any]:
     return kwargs
 
 
-def get_scale_and_units_from_ome(pixels: dict[str, Any], axes: str, shape: tuple[int, ...]) -> tuple[list[float], list[str]]:
+def get_scale_translate_and_units_from_ome(pixels: dict[str, Any], axes: str, shape: tuple[int, ...]) -> tuple[list[float], list[float], list[str]]:
     pixel_size = []
+    translate = []
     units = []
+    reg = pint.get_application_registry()
+    plane_info = pixels.get("Plane")
+    if isinstance(plane_info, list):
+        plane_info = plane_info[0]
 
     for i, ax in enumerate(axes):
         if ax == "c":
@@ -297,15 +303,33 @@ def get_scale_and_units_from_ome(pixels: dict[str, Any], axes: str, shape: tuple
         if ax == 't':
             time_increment = float(pixels.get("TimeIncrement", 1.0))
             time_unit = pixels.get("TimeIncrementUnit", "pixel")
+            time_translation = plane_info.get(f"ExposureTime", 0)
+            if time_translation != 0:
+                time_translation_unit = plane_info.get(f"ExposureTimeUnit", "s")
+                time_translation = (reg(time_translation_unit) * time_translation).to(time_unit).magnitude
             pixel_size.append(time_increment)
             units.append(time_unit)
+            translate.append(time_translation)
         else:
             ax_ = ax.upper()
             physical_size = float(pixels.get(f"PhysicalSize{ax_}", 1.0))
             spatial_unit = pixels.get(f"PhysicalSize{ax_}Unit", "pixel")
+            physical_translation = plane_info.get(f"Position{ax_}", 0)
+            if physical_translation != 0:
+                physical_translation_unit = plane_info.get(f"Position{ax_}Unit", "pixel")
+                physical_translation = (reg(physical_translation_unit) * physical_translation).to(spatial_unit).magnitude
             pixel_size.append(physical_size)
             units.append(spatial_unit)
-    return pixel_size, units
+            translate.append(physical_translation)
+    return pixel_size, translate, units
+
+"""
+self.shift = [
+                meta_data["Pixels"]["Plane"][0][f"Position{x}"]
+                * name_to_scalar[meta_data["Pixels"]["Plane"][0][f"Position{x}Unit"]]
+                for x in ["Z", "Y", "X"]
+            ]
+            """
 
 
 def get_ome_tiff_metadata(tif: TiffFile) -> dict[str, Any]:
@@ -318,7 +342,7 @@ def get_ome_tiff_metadata(tif: TiffFile) -> dict[str, Any]:
     dtype = series.dtype
     axes = series.axes.lower().replace("s", "c")
 
-    pixel_size, units = get_scale_and_units_from_ome(pixels, axes, shape)
+    pixel_size, translate, units = get_scale_translate_and_units_from_ome(pixels, axes, shape)
 
     if "c" in axes:
         channel_axis = axes.index("c")
@@ -387,6 +411,7 @@ def get_ome_tiff_metadata(tif: TiffFile) -> dict[str, Any]:
         axis_labels=list(axes.replace("c", "")),
         name=names,
         scale=scale,
+        translate=translate,
         colormap=colormaps,
         contrast_limits=contrast_limits,
         blending=blendings,

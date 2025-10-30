@@ -89,6 +89,16 @@ def test_write_translate(tmp_path: Path) -> None:
     assert layer_data_list[0][1]["scale"] == [10, 10]
     assert layer_data_list[0][1]["translate"] == [5, 5]
 
+def test_write_translate_with_time_3d(tmp_path: Path) -> None:
+    layer = Image(np.empty((5, 10, 20, 20), dtype=np.uint8), scale=(3, 5, 10, 10), translate=(2, 4, 5, 5), units=["s", "cm", "mm", "mm"])
+    writer = images_layer_writer(str(tmp_path / "data.tiff"), [layer.as_layer_data_tuple()])
+    assert writer == [str(tmp_path / "data.tiff")]
+    assert (tmp_path / "data.tiff").exists()
+    layer_data_list = reader_function(str(tmp_path / "data.tiff"))
+    assert layer_data_list[0][1]["scale"] == [3, 5, 10, 10]
+    assert layer_data_list[0][1]["translate"] == [2, 4, 5, 5]
+
+
 def test_not_match_data_shape(tmp_path: Path) -> None:
     layer1 = Image(np.random.randint(0, 255, size=(20, 20)).astype(np.uint8))
     layer2 = Image(np.random.randint(0, 255, size=(2, 20, 20)).astype(np.uint8))

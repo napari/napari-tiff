@@ -5,6 +5,9 @@ contributions:
   - id: napari-tiff.get_reader
     title: Get Reader
     python_name: napari_tiff.napari_tiff_reader:napari_get_reader
+  - id: napari-tiff.write_image
+    title: Write Image
+    python_name: napari_tiff.napari_tiff_writer:images_layer_writer
   readers:
   - command: napari-tiff.get_reader
     accepts_directories: true
@@ -33,3 +36,7 @@ contributions:
     - '*.tf2'
     - '*.btf'
     - '*.eer'
+  writer:
+    - command: napari-tiff.write_image
+      layer_types: ['image+']
+      filename_extensions: ['.tiff', '.tif']

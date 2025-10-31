@@ -1,6 +1,6 @@
 import numpy as np
 import pytest
-from tifffile import TiffFile, xml2dict
+from tifffile import imwrite, TiffFile, xml2dict
 
 from base_data import (
     example_data_imagej,
@@ -92,3 +92,22 @@ def test_imagej_hyperstack_metadata(imagej_hyperstack_image):
 )
 def test_get_scale_and_units_from_ome(data, expected):
     assert get_scale_and_units_from_ome(**data) == expected
+
+
+def test_svs_resolution_units(tmp_path):
+    """Test tifffile_reader with 3D image with resolution unit."""
+    data = np.zeros((10, 20), dtype=np.uint8)
+    filepath = tmp_path / "test.tiff"
+
+    imwrite(filepath, data, description="Aperio |MPP = 1.234")
+
+    with TiffFile(filepath) as tif:
+        assert tif.is_svs
+        layer_data_list = tifffile_reader(tif)
+        metadata = layer_data_list[0][1]
+        scale = metadata.get("scale")
+        units = metadata.get("units")
+
+        expected_scale = (1.234, 1.234)
+        assert np.allclose(scale, expected_scale)
+        assert units == ("µm", "µm")

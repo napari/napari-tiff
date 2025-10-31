@@ -209,7 +209,7 @@ def get_imagej_metadata(tif: TiffFile) -> dict[str, Any]:
     blending = None
     visible = True
 
-    if mode in ("composite", "color"):
+    if mode in ("composite", "color", "grayscale"):
         channel_axis = axes.find("C")
         if channel_axis < 0:
             channel_axis = None

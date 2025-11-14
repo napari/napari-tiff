@@ -1,13 +1,17 @@
 import numpy as np
 import pytest
-from tifffile import TiffFile, xml2dict
+from tifffile import imwrite, TiffFile, xml2dict
 
 from base_data import (
     example_data_imagej,
     example_data_ometiff,
     imagej_hyperstack_image,
 )
-from napari_tiff.napari_tiff_metadata import get_extra_metadata, get_scale_and_units_from_ome
+from napari_tiff.napari_tiff_metadata import (
+    get_extra_metadata,
+    get_scale_and_units_from_ome,
+    get_scale_and_units_from_tiff,
+)
 from napari_tiff.napari_tiff_reader import tifffile_reader
 
 
@@ -92,3 +96,59 @@ def test_imagej_hyperstack_metadata(imagej_hyperstack_image):
 )
 def test_get_scale_and_units_from_ome(data, expected):
     assert get_scale_and_units_from_ome(**data) == expected
+
+
+@pytest.mark.parametrize(
+    # XResolution = 100
+    # YResolution = 200
+    "resolution_unit, expected_units, expected_scale",
+    [
+        (1, ("pixel", "pixel"), (1 / 200, 1 / 100)),
+        # ResolutionUnit 2 = inches
+        (2, ("µm", "µm"), (25400 / 200, 25400 / 100)),
+        # ResolutionUnit 3 = cm
+        (3, ("µm", "µm"), (10000 / 200, 10000 / 100)),
+    ],
+)
+def test_tifffile_reader_2d_resolution(
+    tmp_path, resolution_unit, expected_units, expected_scale
+):
+    """Test tifffile_reader with 2D images with different resolution units."""
+    data = np.zeros((10, 20), dtype=np.uint8)
+    filepath = tmp_path / "test.tiff"
+
+    imwrite(
+        filepath,
+        data,
+        resolution=(100, 200),
+        resolutionunit=resolution_unit,
+    )
+
+    with TiffFile(filepath) as tif:
+        layer_data_list = tifffile_reader(tif)
+        metadata = layer_data_list[0][1]
+        scale = metadata.get("scale")
+        units = metadata.get("units")
+
+        assert np.allclose(scale, expected_scale)
+        assert units == expected_units
+
+
+
+def test_tifffile_reader_3d_resolution(tmp_path):
+    """Test tifffile_reader with 3D image with resolution unit."""
+    data = np.zeros((5, 10, 20), dtype=np.uint8)
+    filepath = tmp_path / "test.tiff"
+
+    imwrite(filepath, data, resolution=(100, 200), resolutionunit=2)
+
+    with TiffFile(filepath) as tif:
+
+        layer_data_list = tifffile_reader(tif)
+        metadata = layer_data_list[0][1]
+        scale = metadata.get("scale")
+        units = metadata.get("units")
+
+        expected_scale = (1.0, 25400 / 200, 25400 / 100)
+        assert np.allclose(scale, expected_scale)
+        assert units == ("pixel", "µm", "µm")

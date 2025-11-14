@@ -3,7 +3,7 @@ from typing import Any
 
 import numpy
 import numpy as np
-from tifffile import PHOTOMETRIC, TiffFile, xml2dict
+from tifffile import PHOTOMETRIC, tifffile, TiffFile, xml2dict
 
 from napari_tiff.napari_tiff_colormaps import alpha_colormap, int_to_rgba, CUSTOM_COLORMAPS
 
@@ -15,13 +15,15 @@ def get_metadata(tif: TiffFile) -> dict[str, Any]:
     # TODO: combine interpretation of imagej and tags metadata?:
     elif tif.is_imagej:
         metadata_kwargs = get_imagej_metadata(tif)
+    elif tif.is_svs:
+        metadata_kwargs = get_svs_metadata(tif)
     else:
         metadata_kwargs = get_tiff_metadata(tif)
 
     # napari does not use this this extra `metadata` layer attribute
     # but storing the information on the layer next to the data
     # will allow users to access it and use it themselves if they wish
-    metadata_kwargs["metadata"] = get_extra_metadata(tif)
+    metadata_kwargs.setdefault("metadata", {}).update(get_extra_metadata(tif))
 
     return metadata_kwargs
 
@@ -285,6 +287,25 @@ def get_imagej_metadata(tif: TiffFile) -> dict[str, Any]:
         units=tuple(units),
     )
     return kwargs
+
+
+def get_svs_metadata(tif: TiffFile) -> dict[str, Any]:
+    """Return napari metadata from SVS file."""
+    # get the (limited) metadata we can from tiff tags
+    metadata_kwargs = get_tiff_metadata(tif)
+    # get the SVS metadata from the ImageDescription tag
+    image_description = tif.pages[0].description
+    svs_metadata = tifffile.svs_description_metadata(image_description)
+    # SVS uses microns per pixel (MPP)
+    scale = svs_metadata.get('MPP') or 1.0
+    unit = "µm"
+    axes = tif.series[0].axes
+    metadata_kwargs["scale"] = tuple(scale if ax in ("X", "Y") else 1.0 for ax in axes if ax not in "CS")
+    metadata_kwargs["units"] = tuple(unit if ax in ("X", "Y") else "pixel" for ax in axes if ax not in "CS")
+
+    metadata_kwargs.setdefault("metadata", {}).update({"SVS_metadata": svs_metadata})
+
+    return metadata_kwargs
 
 
 def get_scale_and_units_from_ome(pixels: dict[str, Any], axes: str, shape: tuple[int, ...]) -> tuple[list[float], list[str]]:

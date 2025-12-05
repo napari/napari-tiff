@@ -73,47 +73,13 @@ jobs:
             ./.coverage.*
 
   upload_coverage:
-    permissions:
-      id-token: write  # Required for OIDC authentication
-      contents: read    # Required for code checkout
-    name: Upload coverage
-    needs: [test]
-    if: always()
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
-
-      - uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6.1.0
-        with:
-          python-version: "3.x"
-          cache-dependency-path: pyproject.toml
-          cache: 'pip'
-
-      - name: Install Dependencies
-        run: |
-          pip install --upgrade pip
-          pip install codecov
-
-      - name: Download coverage data
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
-        with:
-          pattern: coverage reports*
-          path: coverage
-          merge-multiple: true
-
-      - name: combine coverage data
-        run: |
-          python -Im coverage combine coverage
-          python -Im coverage xml -o coverage.xml
-
-          # Report and write to summary.
-          python -Im coverage report --format=markdown --skip-empty --skip-covered >> "$GITHUB_STEP_SUMMARY"
-
-      - name: Upload coverage data
-        uses: codecov/codecov-action@5a1091511ad55cbe89839c7260b706298ca349f7 # v5.5.1
-        with:
-          fail_ci_if_error: true
-          use_oidc: ${{ github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository) }}
+    if: ${{ always() }}
+    secrets: inherit
+    needs:
+      - test
+    uses: napari/shared-workflows/.github/workflows/upload_coverage.yml@main
+    with:
+      artifact-pattern: 'coverage reports*'
 
   build-and-inspect-package:
       name: Build & inspect package.

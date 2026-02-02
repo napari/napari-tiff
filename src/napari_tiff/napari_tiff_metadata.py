@@ -3,6 +3,7 @@ from typing import Any
 
 import numpy
 import numpy as np
+import pint
 from tifffile import PHOTOMETRIC, TiffFile, xml2dict
 
 from napari_tiff.napari_tiff_colormaps import alpha_colormap, int_to_rgba, CUSTOM_COLORMAPS
@@ -274,7 +275,7 @@ def get_imagej_metadata(tif: TiffFile) -> dict[str, Any]:
 
     kwargs = dict(
         rgb=rgb,
-        axis_labels=axes.lower().replace("c", "").replace("s", ""),
+        axis_labels=list(axes.lower().replace("c", "").replace("s", "")),
         channel_axis=channel_axis,
         name=name,
         scale=tuple(scale_),
@@ -287,9 +288,14 @@ def get_imagej_metadata(tif: TiffFile) -> dict[str, Any]:
     return kwargs
 
 
-def get_scale_and_units_from_ome(pixels: dict[str, Any], axes: str, shape: tuple[int, ...]) -> tuple[list[float], list[str]]:
+def get_scale_translate_and_units_from_ome(pixels: dict[str, Any], axes: str, shape: tuple[int, ...]) -> tuple[list[float], list[float], list[str]]:
     pixel_size = []
+    translate = []
     units = []
+    reg = pint.get_application_registry()
+    plane_info = pixels.get("Plane", {})
+    if isinstance(plane_info, list):
+        plane_info = plane_info[0]
 
     for i, ax in enumerate(axes):
         if ax == "c":
@@ -297,15 +303,33 @@ def get_scale_and_units_from_ome(pixels: dict[str, Any], axes: str, shape: tuple
         if ax == 't':
             time_increment = float(pixels.get("TimeIncrement", 1.0))
             time_unit = pixels.get("TimeIncrementUnit", "pixel")
-            pixel_size.append(get_time_units_seconds(time_increment, time_unit))
-            units.append('s' if time_unit != 'pixel' else 'pixel')
+            time_translation = plane_info.get(f"ExposureTime", 0)
+            if time_translation != 0:
+                time_translation_unit = plane_info.get(f"ExposureTimeUnit", "s")
+                time_translation = (reg(time_translation_unit) * time_translation).to(time_unit).magnitude
+            pixel_size.append(time_increment)
+            units.append(time_unit)
+            translate.append(time_translation)
         else:
             ax_ = ax.upper()
             physical_size = float(pixels.get(f"PhysicalSize{ax_}", 1.0))
             spatial_unit = pixels.get(f"PhysicalSize{ax_}Unit", "pixel")
-            pixel_size.append(get_value_units_micrometer(physical_size, spatial_unit))
-            units.append('µm' if spatial_unit != 'pixel' else 'pixel')
-    return pixel_size, units
+            physical_translation = plane_info.get(f"Position{ax_}", 0)
+            if physical_translation != 0:
+                physical_translation_unit = plane_info.get(f"Position{ax_}Unit", "pixel")
+                physical_translation = (reg(physical_translation_unit) * physical_translation).to(spatial_unit).magnitude
+            pixel_size.append(physical_size)
+            units.append(spatial_unit)
+            translate.append(physical_translation)
+    return pixel_size, translate, units
+
+"""
+self.shift = [
+                meta_data["Pixels"]["Plane"][0][f"Position{x}"]
+                * name_to_scalar[meta_data["Pixels"]["Plane"][0][f"Position{x}Unit"]]
+                for x in ["Z", "Y", "X"]
+            ]
+            """
 
 
 def get_ome_tiff_metadata(tif: TiffFile) -> dict[str, Any]:
@@ -318,7 +342,7 @@ def get_ome_tiff_metadata(tif: TiffFile) -> dict[str, Any]:
     dtype = series.dtype
     axes = series.axes.lower().replace("s", "c")
 
-    pixel_size, units = get_scale_and_units_from_ome(pixels, axes, shape)
+    pixel_size, translate, units = get_scale_translate_and_units_from_ome(pixels, axes, shape)
 
     if "c" in axes:
         channel_axis = axes.index("c")
@@ -384,9 +408,10 @@ def get_ome_tiff_metadata(tif: TiffFile) -> dict[str, Any]:
     kwargs = dict(
         rgb=is_rgb,
         channel_axis=channel_axis,
-        axis_labels=axes.replace("c", ""),
+        axis_labels=list(axes.replace("c", "")),
         name=names,
         scale=scale,
+        translate=translate,
         colormap=colormaps,
         contrast_limits=contrast_limits,
         blending=blendings,
@@ -394,41 +419,6 @@ def get_ome_tiff_metadata(tif: TiffFile) -> dict[str, Any]:
         units=units or None,
     )
     return kwargs
-
-
-def get_value_units_micrometer(value: float, unit: str = None) -> float:
-    unit_conversions = {
-        "nm": 1e-3,
-        "µm": 1,
-        "\\u00B5m": 1,  # Unicode 'MICRO SIGN' (U+00B5)
-        "um": 1,
-        "micrometer": 1,
-        "mm": 1e3,
-        "cm": 1e4,
-        "m": 1e6,
-    }
-    if unit and unit != "pixels":
-        value_um = value * unit_conversions.get(unit, 1)
-    else:
-        value_um = value
-    return value_um
-
-def get_time_units_seconds(value: float, unit: str = None) -> float:
-    unit_conversions = {
-        "ns": 1e-9,
-        "µs": 1e-6,
-        "\\u00B5s": 1e-6,  # Unicode 'MICRO SIGN' (U+00B5)
-        "us": 1e-6,
-        "ms": 1e-3,
-        "s": 1,
-        "min": 60,
-        "h": 3600,
-    }
-    if unit and unit != "pixels":
-        value_s = value * unit_conversions.get(unit, 1)
-    else:
-        value_s = value
-    return value_s
 
 
 def ensure_list(x):

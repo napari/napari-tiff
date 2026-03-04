@@ -435,7 +435,14 @@ def get_time_units_seconds(value: float, unit: str = None) -> float:
 
 
 def get_scale_and_units_from_tiff(page, axes):
-    """Extract scale and units from TIFF tags using tifffile properties."""
+    """Extract scale and units from TIFF tags using tifffile properties.
+    
+    Notes
+    ----- 
+    - tiff tags XResolution and YResolution are pixels per ResolutionUnit in ImageWidth and ImageLength respectively
+    - tiff tags ResolutionUnit can be 1 (reserved; no unit), 2 (inch), or 3 (centimeter). However, tifffile uses meter as the default unit when ResolutionUnit is 1 (no unit); napari is fine with pixels
+    - tifffile has a helper `get_resolution` that returns pixels per  unit and handles basic unit conversions.
+    """
     scale_dict = {}
     units_dict = {}
 

@@ -9,6 +9,7 @@ see: https://napari.org/docs/plugins/hook_specifications.html
 Replace code below accordingly.  For complete documentation see:
 https://napari.org/docs/plugins/for_plugin_developers.html
 """
+import dask.array as da
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 from tifffile import TIFF, TiffFile, TiffSequence
@@ -76,7 +77,8 @@ def tifffile_reader(tif: TiffFile) -> List[LayerData]:
         store = tif.aszarr(multiscales=True)
         group = zarr.open_group(store=store, mode='r')
         # using group.attrs to get multiscales is recommended by cgohlke
-        data = [group[path_dict['path']] for path_dict in group.attrs['multiscales'][0]['datasets']]
+        # default dask chunk is 128MiB, so use 1 MiB, which is more reasonable for visualization
+        data = [da.from_zarr(group[path_dict['path']], chunks='1 MiB') for path_dict in group.attrs['multiscales'][0]['datasets']]
         # assert array shapes are in descending order for napari multiscale image
         shapes = [arr.shape for arr in data]
         assert shapes == list(reversed(sorted(shapes)))

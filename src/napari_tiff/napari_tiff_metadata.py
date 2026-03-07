@@ -440,14 +440,16 @@ def get_scale_and_units_from_tiff(page, axes):
     Notes
     ----- 
     - tiff tags XResolution and YResolution are pixels per ResolutionUnit in ImageWidth and ImageLength respectively
-    - tiff tags ResolutionUnit can be 1 (reserved; no unit), 2 (inch), or 3 (centimeter). However, tifffile uses meter as the default unit when ResolutionUnit is 1 (no unit); napari is fine with pixels
+    - tiff tags ResolutionUnit can be 1 (reserved; no unit), 2 (inch), or 3 (centimeter). 
+    - tifffile treats ResolutionUnit=1 (no unit) as equivalent to meter when performing unit conversions via the unit parameter
     - tifffile has a helper `get_resolution` that returns pixels per  unit and handles basic unit conversions.
     """
     scale_dict = {}
     units_dict = {}
 
-    if page.resolutionunit == 1:
+    if page.resolutionunit == 1 or 282 not in page.tags:
         # 1 means no unit, but tifffile uses meter as the default
+        # 282 not in page.tags accounts for files that have missing resolution tags
         x_res, y_res = page.get_resolution()
         units_dict["X"] = "pixel"
         units_dict["Y"] = "pixel"

@@ -13,6 +13,7 @@ def alpha_colormap(bitspersample=8, samples=4):
 
 
 def _int_to_rgba_bytes(intrgba: int) -> list[int]:
+    """Return RGBA bytes from a packed OME channel color integer."""
     signed = intrgba < 0
     rgba = list(intrgba.to_bytes(4, signed=signed, byteorder="big"))
     if rgba[-1] == 0:
@@ -21,8 +22,10 @@ def _int_to_rgba_bytes(intrgba: int) -> list[int]:
 
 
 def int_to_rgba(intrgba: int) -> tuple:
+    """Return normalized RGBA values from a packed OME channel color integer."""
     return tuple(x / 255 for x in _int_to_rgba_bytes(intrgba))
 
 
 def int_to_hex(intrgba: int) -> str:
+    """Return a ``#rrggbbaa`` string from a packed OME channel color integer."""
     return f"#{bytes(_int_to_rgba_bytes(intrgba)).hex()}"

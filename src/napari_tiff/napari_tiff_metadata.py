@@ -5,7 +5,7 @@ import numpy
 import numpy as np
 from tifffile import PHOTOMETRIC, TiffFile, xml2dict
 
-from napari_tiff.napari_tiff_colormaps import alpha_colormap, int_to_rgba, CUSTOM_COLORMAPS
+from napari_tiff.napari_tiff_colormaps import alpha_colormap, int_to_hex, CUSTOM_COLORMAPS
 
 
 def get_metadata(tif: TiffFile) -> dict[str, Any]:
@@ -352,7 +352,7 @@ def get_ome_tiff_metadata(tif: TiffFile) -> dict[str, Any]:
         color = channel.get("Color")
         colormap = None
         if color:
-            colormap = int_to_rgba(int(color))
+            colormap = int_to_hex(int(color))
         elif is_rgb and len(channels) > 1:
             # separate channels provided for RGB (with missing color)
             colormap = ["red", "green", "blue", alpha_colormap()][channel_idx]

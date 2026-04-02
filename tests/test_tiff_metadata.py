@@ -8,6 +8,7 @@ from base_data import (
     example_data_ometiff,
     imagej_hyperstack_image,
 )
+from napari_tiff.napari_tiff_colormaps import int_to_hex
 from napari_tiff.napari_tiff_metadata import get_extra_metadata, get_scale_and_units_from_ome
 from napari_tiff.napari_tiff_reader import tifffile_reader
 
@@ -93,3 +94,15 @@ def test_imagej_hyperstack_metadata(imagej_hyperstack_image):
 )
 def test_get_scale_and_units_from_ome(data, expected):
     assert get_scale_and_units_from_ome(**data) == expected
+
+
+@pytest.mark.parametrize(
+    ("intrgba", "expected"),
+    [
+        (0xFF000000, "#ff0000ff"),
+        (0x00FF0080, "#00ff0080"),
+        (-16776961, "#ff0000ff"),
+    ],
+)
+def test_int_to_hex(intrgba, expected):
+    assert int_to_hex(intrgba) == expected

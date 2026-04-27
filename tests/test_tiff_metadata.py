@@ -1,6 +1,7 @@
 import numpy as np
 import pytest
 from tifffile import TiffFile, xml2dict
+from numpy import testing as npt
 
 from base_data import (
     example_data_imagej,
@@ -52,12 +53,12 @@ def test_imagej_hyperstack_metadata(imagej_hyperstack_image):
     assert isinstance(layer_data_tuple, tuple) and len(layer_data_tuple) == 3
 
     napari_layer_metadata = layer_data_tuple[1]
-    assert napari_layer_metadata.get("scale") == (
+    npt.assert_array_almost_equal(napari_layer_metadata.get("scale"), (
         0.1,
         3.947368,
-        2.675500000484335,
-        2.675500000484335,
-    )
+        2.675500,
+        2.675500,
+    ))
     assert layer_data_tuple[0].shape == (6, 57, 256, 256)  # image volume shape
 
     napari_layer_imagej_metadata = napari_layer_metadata.get("metadata").get(

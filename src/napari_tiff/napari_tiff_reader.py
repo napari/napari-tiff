@@ -76,9 +76,14 @@ def tifffile_reader(tif: TiffFile) -> List[LayerData]:
         import zarr
         store = tif.aszarr(multiscales=True)
         group = zarr.open_group(store=store, mode='r')
+        try:
+            datasets = group.attrs['ome']['multiscales'][0]['datasets']
+        except KeyError:
+            datasets = group.attrs['multiscales'][0]['datasets']
+
         # using group.attrs to get multiscales is recommended by cgohlke
         # default dask chunk is 128MiB, so use 1 MiB, which is more reasonable for visualization
-        data = [da.from_zarr(group[path_dict['path']], chunks='1 MiB') for path_dict in group.attrs['multiscales'][0]['datasets']]
+        data = [da.from_zarr(group[path_dict['path']], chunks='1 MiB') for path_dict in datasets]
         # assert array shapes are in descending order for napari multiscale image
         shapes = [arr.shape for arr in data]
         assert shapes == list(reversed(sorted(shapes)))

@@ -135,7 +135,6 @@ def test_tifffile_reader_2d_resolution(
         assert units == expected_units
 
 
-
 def test_tifffile_reader_3d_resolution(tmp_path):
     """Test tifffile_reader with 3D image with resolution unit."""
     data = np.zeros((5, 10, 20), dtype=np.uint8)
@@ -153,3 +152,22 @@ def test_tifffile_reader_3d_resolution(tmp_path):
         expected_scale = (1.0, 25400 / 200, 25400 / 100)
         assert np.allclose(scale, expected_scale)
         assert units == ("pixel", "µm", "µm")
+
+
+def test_svs_resolution_units(tmp_path):
+    """Test tifffile_reader with SVS microns-per-pixel metadata."""
+    data = np.zeros((10, 20), dtype=np.uint8)
+    filepath = tmp_path / "test.svs"
+
+    imwrite(filepath, data, description="Aperio |MPP = 1.234", tile=(16, 16))
+
+    with TiffFile(filepath) as tif:
+        assert tif.is_svs
+        layer_data_list = tifffile_reader(tif)
+        metadata = layer_data_list[0][1]
+        scale = metadata.get("scale")
+        units = metadata.get("units")
+
+        expected_scale = (1.234, 1.234)
+        assert np.allclose(scale, expected_scale)
+        assert units == ("µm", "µm")

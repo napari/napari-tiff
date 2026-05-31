@@ -155,11 +155,11 @@ def test_tifffile_reader_3d_resolution(tmp_path):
 
 
 def test_svs_resolution_units(tmp_path):
-    """Test tifffile_reader with 3D image with resolution unit."""
+    """Test tifffile_reader with SVS microns-per-pixel metadata."""
     data = np.zeros((10, 20), dtype=np.uint8)
-    filepath = tmp_path / "test.tiff"
+    filepath = tmp_path / "test.svs"
 
-    imwrite(filepath, data, description="Aperio |MPP = 1.234")
+    imwrite(filepath, data, description="Aperio |MPP = 1.234", tile=(16, 16))
 
     with TiffFile(filepath) as tif:
         assert tif.is_svs

@@ -123,7 +123,7 @@ def test_multiresolution_image(example_data_multiresolution):
     assert all([isinstance(level, da.core.Array) for level in layer_data])
 
 
-@pytest.mark.parametrize("file_name", ['test_imagej.tiff', 'test_ome.tiff', 'test_imagej_with_time.tiff', 'test_ome_with_time.tiff'])
+@pytest.mark.parametrize("file_name", ['test_imagej.tiff', 'test_ome.tiff', 'test_imagej_with_time.tiff', 'test_imagej_greyscale.tiff', 'test_ome_with_time.tiff'])
 def test_read_tiff_metadata_colormap(data_dir, file_name):
     """Test opening an ImageJ tiff."""
     viewer = ViewerModel()
@@ -131,8 +131,13 @@ def test_read_tiff_metadata_colormap(data_dir, file_name):
     add_images_to_viewer(viewer, layer_data_list)
     assert len(viewer.layers) == 2
     assert isinstance(viewer.layers[0], Image)
-    assert_array_equal(viewer.layers[0].colormap.colors[-1], (1, 0, 0, 1))
-    assert_array_equal(viewer.layers[1].colormap.colors[-1], (0, 0, 1, 1))
+    if file_name == 'test_imagej_greyscale.tiff':
+        # from issue #66 https://github.com/napari/napari-tiff/issues/66
+        assert_array_equal(viewer.layers[0].colormap.colors[-1], (1, 1, 1, 1))
+        assert_array_equal(viewer.layers[1].colormap.colors[-1], (1, 1, 1, 1))
+    else:
+        assert_array_equal(viewer.layers[0].colormap.colors[-1], (1, 0, 0, 1))
+        assert_array_equal(viewer.layers[1].colormap.colors[-1], (0, 0, 1, 1))
 
 @pytest.mark.parametrize("file_name", ['test_imagej.tiff', 'test_ome.tiff'])
 def test_read_tiff_metadata_units(data_dir, file_name):

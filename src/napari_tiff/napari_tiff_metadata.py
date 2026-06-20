@@ -303,8 +303,8 @@ def get_svs_metadata(tif: TiffFile) -> dict[str, Any]:
     scale = svs_metadata.get('MPP') or 1.0
     unit = "µm"
     axes = tif.series[0].axes
-    metadata_kwargs["scale"] = tuple(scale if ax in ("X", "Y") else 1.0 for ax in axes if ax not in "CS")
-    metadata_kwargs["units"] = tuple(unit if ax in ("X", "Y") else "pixel" for ax in axes if ax not in "CS")
+    metadata_kwargs["scale"] = tuple(scale if ax in "XY" else 1.0 for ax in axes if ax not in "CS")
+    metadata_kwargs["units"] = tuple(unit if ax in "XY" else "pixel" for ax in axes if ax not in "CS")
 
     metadata_kwargs.setdefault("metadata", {}).update({"SVS_metadata": svs_metadata})
 

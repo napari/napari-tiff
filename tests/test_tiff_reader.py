@@ -15,6 +15,7 @@ from base_data import (
     example_data_imagej,
     example_data_multiresolution,
     example_data_ometiff,
+    example_data_shaped_singleton,
     example_data_tiff,
     example_data_zipped_filepath,
 )
@@ -121,6 +122,37 @@ def test_multiresolution_image(example_data_multiresolution):
     assert layer_data[1].shape == (16, 256, 256, 3)
     assert layer_data[2].shape == (16, 128, 128, 3)
     assert all([isinstance(level, da.core.Array) for level in layer_data])
+
+
+def test_shaped_singleton_image(example_data_shaped_singleton):
+    """Test a plain, 'shaped' tiff with a leading singleton dimension.
+
+    Regression test for the recorded 5D shape ``[1, 2, 14, 32, 32]``. Data and
+    metadata must both come from ``series[0]`` so their dimensionality agrees,
+    otherwise adding the layer to a viewer raises
+    ``ValueError: units=... must have length ndim=...``.
+
+    The assertions are deliberately version-agnostic: tifffile >=2026.5.2
+    squeezes the leading singleton in the series view (data is 4D), while older
+    versions keep it (data is 5D). Either way, data and metadata must match.
+    """
+    tif = example_data_shaped_singleton
+
+    layer_data_list = tifffile_reader(tif)
+    data, kwargs, _ = layer_data_list[0]
+
+    # data always comes from series[0]
+    assert data.shape == tif.series[0].shape
+
+    # scale and units must match the data dimensionality
+    assert len(kwargs["scale"]) == data.ndim
+    assert len(kwargs["units"]) == data.ndim
+
+    # the actual failure mode was on layer creation
+    viewer = ViewerModel()
+    add_images_to_viewer(viewer, layer_data_list)
+    assert len(viewer.layers) == 1
+    assert viewer.layers[0].ndim == data.ndim
 
 
 @pytest.mark.parametrize("file_name", ['test_imagej.tiff', 'test_ome.tiff', 'test_imagej_with_time.tiff', 'test_imagej_greyscale.tiff', 'test_ome_with_time.tiff'])

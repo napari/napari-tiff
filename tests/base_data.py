@@ -40,6 +40,20 @@ def example_data_ometiff(tmp_path, original_data):
     return tifffile.TiffFile(example_data_filepath)
 
 
+@pytest.fixture
+def example_data_shaped_singleton(tmp_path):
+    """Example 'shaped' tiff with a leading singleton dimension.
+
+    A plain (non-OME, non-ImageJ) tiff written by tifffile with a recorded shape that carries a
+    size-1 leading axis (e.g. ``{"shape": [1, 2, 14, Y, X]}``). 
+    Since tifffile 2026.5.2 the series view squeezes this axis (4D) n contrast to ``TiffFile.asarray()``.
+    """
+    example_data_filepath = str(tmp_path / "test-shaped-singleton.tif")
+    data = np.ones((1, 2, 14, 32, 32), dtype=np.float32)
+    tifffile.imwrite(example_data_filepath, data)
+    return tifffile.TiffFile(example_data_filepath)
+
+
 @pytest.fixture(scope="session")
 def imagej_hyperstack_image(tmp_path_factory):
     """ImageJ hyperstack tiff image.

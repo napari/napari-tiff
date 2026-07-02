@@ -46,13 +46,13 @@ def get_extra_metadata(tif: TiffFile) -> dict[str, Any]:
 
 
 def get_tiff_metadata(tif: TiffFile) -> dict[str, Any]:
-    """Return napari metadata from largest image series in TIFF file."""
+    """Return napari metadata from the first image series in TIFF file.
+    
+    Uses the first series, series[0], so metadata matches the data loaded by the reader.
+    """
     # TODO: fix (u)int32/64
     # TODO: handle complex
     series = tif.series[0]
-    for s in tif.series:
-        if s.size > series.size:
-            series = s
     dtype = series.dtype
     axes = series.axes
     shape = series.shape

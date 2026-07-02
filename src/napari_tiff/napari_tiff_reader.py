@@ -88,7 +88,8 @@ def tifffile_reader(tif: TiffFile) -> List[LayerData]:
         shapes = [arr.shape for arr in data]
         assert shapes == list(reversed(sorted(shapes)))
     else:
-        data = tif.asarray()
+        # explicitly use series[0] to get the data
+        data = tif.series[0].asarray()
 
     metadata_kwargs = get_metadata(tif)
 

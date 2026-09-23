@@ -1,8 +1,7 @@
-import contextlib
 from typing import Any
+import itertools
 
 import numpy
-import numpy as np
 from tifffile import PHOTOMETRIC, tifffile, TiffFile, xml2dict
 
 from napari_tiff.napari_tiff_colormaps import alpha_colormap, int_to_rgba, CUSTOM_COLORMAPS
@@ -142,6 +141,7 @@ def get_tiff_metadata(tif: TiffFile) -> dict[str, Any]:
         if channel_axis >= 0 and shape[channel_axis] > 1:
             n = shape[channel_axis]
             name = [f"Channel {i}" for i in range(n)]
+            colormap = itertools.islice(itertools.cycle(["red", "green", "blue", "gray", "cyan", "magenta", "yellow"]), n)
         else:
             channel_axis = None
 

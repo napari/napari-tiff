@@ -171,3 +171,33 @@ def test_svs_resolution_units(tmp_path):
         expected_scale = (1.234, 1.234)
         assert np.allclose(scale, expected_scale)
         assert units == ("µm", "µm")
+
+
+@pytest.mark.parametrize("nchannels", [2, 3, 39])
+def test_tifffile_reader_splits_channels(tmp_path, nchannels):
+    """Every channel becomes its own layer, however many there are.
+    """
+    data = np.zeros((nchannels, 10, 20), dtype=np.uint8)
+    filepath = tmp_path / f"test_{nchannels}_channels.tiff"
+
+    imwrite(
+        filepath,
+        data,
+        photometric="minisblack",
+        metadata={"axes": "CYX"},
+        resolution=(100, 200),
+        resolutionunit=2,
+    )
+
+    with TiffFile(filepath) as tif:
+        assert tif.series[0].axes == "CYX"
+        metadata = tifffile_reader(tif)[0][1]
+
+    assert metadata.get("channel_axis") == 0
+    assert metadata.get("name") == [f"Channel {i}" for i in range(nchannels)]
+    # napari cycles its own colormaps when given None, and raises an IndexError
+    # if it is handed fewer colormaps than there are channels
+    assert metadata.get("colormap") is None
+    # the channel axis is consumed by the split, so it is not a layer dimension
+    assert np.allclose(metadata.get("scale"), (25400 / 200, 25400 / 100))
+    assert metadata.get("units") == ("µm", "µm")

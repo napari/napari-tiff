@@ -137,16 +137,15 @@ def get_tiff_metadata(tif: TiffFile) -> dict[str, Any]:
             channel_axis = None
 
     if channel_axis is None:
-        # separate up to 3 channels
+        # separate channels
         channel_axis = axes.find("C")
-        if channel_axis > 0 and 1 < shape[channel_axis] < 4:
+        if channel_axis >= 0 and shape[channel_axis] > 1:
             n = shape[channel_axis]
-            colormap = ["red", "green", "blue", "gray", "cyan", "magenta", "yellow"][:n]
             name = [f"Channel {i}" for i in range(n)]
         else:
             channel_axis = None
 
-        if page.photometric == PHOTOMETRIC.PALETTE and page.colormap is not None:
+        if channel_axis is None and page.photometric == PHOTOMETRIC.PALETTE and page.colormap is not None:
             # PALETTE
             colormap_values = page.colormap
             if numpy.max(colormap_values) > 255:

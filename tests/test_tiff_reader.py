@@ -1,6 +1,6 @@
 import numpy as np
 import pytest
-import dask.array as da
+import zarr
 
 import pint
 from napari.layers import Image
@@ -121,7 +121,7 @@ def test_multiresolution_image(example_data_multiresolution):
     assert layer_data[0].shape == (16, 512, 512, 3)
     assert layer_data[1].shape == (16, 256, 256, 3)
     assert layer_data[2].shape == (16, 128, 128, 3)
-    assert all([isinstance(level, da.core.Array) for level in layer_data])
+    assert all([isinstance(level, zarr.Array) for level in layer_data])
 
 
 def test_shaped_singleton_image(example_data_shaped_singleton):

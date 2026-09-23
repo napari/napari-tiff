@@ -141,7 +141,7 @@ def get_tiff_metadata(tif: TiffFile) -> dict[str, Any]:
         if channel_axis >= 0 and shape[channel_axis] > 1:
             n = shape[channel_axis]
             name = [f"Channel {i}" for i in range(n)]
-            colormap = itertools.islice(itertools.cycle(["red", "green", "blue", "gray", "cyan", "magenta", "yellow"]), n)
+            colormap = list(itertools.islice(itertools.cycle(["red", "green", "blue", "gray", "cyan", "magenta", "yellow"]), n))
         else:
             channel_axis = None
 

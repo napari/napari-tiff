@@ -91,7 +91,11 @@ def tifffile_reader(tif: TiffFile) -> List[LayerData]:
         # explicitly use series[0] to get the data
         data = tif.series[0].asarray()
 
-    metadata_kwargs = get_metadata(tif)
+    try:
+        metadata_kwargs = get_metadata(tif)
+    except Exception as exc:
+        log_warning(f"tifffile metadata: {exc}")
+        metadata_kwargs = {}
 
     return [(data, metadata_kwargs, "image")]
 

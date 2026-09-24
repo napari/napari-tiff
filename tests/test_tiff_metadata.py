@@ -1,6 +1,6 @@
 import numpy as np
 import pytest
-from tifffile import imwrite, TiffFile, xml2dict
+from tifffile import imwrite, TiffFile, TiffWriter, xml2dict
 from numpy import testing as npt
 
 from base_data import (
@@ -13,6 +13,7 @@ from napari_tiff.napari_tiff_metadata import (
     get_scale_and_units_from_ome,
     get_scale_and_units_from_tiff,
 )
+from napari_tiff.napari_tiff_colormaps import qpi_color_to_rgba
 from napari_tiff.napari_tiff_reader import tifffile_reader
 
 
@@ -201,3 +202,163 @@ def test_tifffile_reader_splits_channels(tmp_path, nchannels):
     # the channel axis is consumed by the split, so it is not a layer dimension
     assert np.allclose(metadata.get("scale"), (25400 / 200, 25400 / 100))
     assert metadata.get("units") == ("µm", "µm")
+
+
+QPI_DESCRIPTION = (
+    '<?xml version="1.0" encoding="utf-16"?>'
+    "<PerkinElmer-QPI-ImageDescription>"
+    "<Name>{name}</Name>"
+    "<Color>{color}</Color>"
+    "<Biomarker>{biomarker}</Biomarker>"
+    "<ImageType>FullResolution</ImageType>"
+    "</PerkinElmer-QPI-ImageDescription>"
+)
+
+QPI_CHANNELS = [
+    # fluorophore, biomarker, colour
+    ("DAPI", "DAPI", "0,0,255"),
+    ("FITC", "CD8", "255,0,0"),
+    ("Cy5", "CD4", "0,255,0"),
+]
+
+
+def write_qptiff(filepath, channels=QPI_CHANNELS, **kwargs):
+    """Write a minimal PerkinElmer/Akoya QPTIFF, one page per channel."""
+    # tifffile identifies a QPTIFF by its Software tag and reads the channels
+    # back as a single CYX series; `metadata=None` keeps tifffile from writing
+    # its own 'shaped' description, which would take priority over that
+    with TiffWriter(filepath) as writer:
+        for index, (name, biomarker, color) in enumerate(channels):
+            writer.write(
+                np.full((10, 20), index, dtype=np.uint8),
+                photometric="minisblack",
+                software="PerkinElmer-QPI",
+                description=QPI_DESCRIPTION.format(
+                    name=name, biomarker=biomarker, color=color
+                ),
+                metadata=None,
+                contiguous=False,
+                **kwargs,
+            )
+
+
+def test_qptiff_channel_names_and_colormaps(tmp_path):
+    """QPTIFF channels are named and coloured from their own page metadata."""
+    filepath = tmp_path / "test.qptiff"
+    write_qptiff(filepath, resolution=(100, 200), resolutionunit=2)
+
+    with TiffFile(filepath) as tif:
+        assert tif.is_qpi
+        assert tif.series[0].axes == "CYX"
+        metadata = tifffile_reader(tif)[0][1]
+
+    assert metadata.get("channel_axis") == 0
+    # the biomarker is the stain, which is more useful than the fluorophore
+    assert metadata.get("name") == ["DAPI", "CD8", "CD4"]
+    assert metadata.get("colormap") == [
+        (0.0, 0.0, 1.0, 1.0),
+        (1.0, 0.0, 0.0, 1.0),
+        (0.0, 1.0, 0.0, 1.0),
+    ]
+    assert metadata.get("units") == ("µm", "µm")
+    # each layer carries its own page's metadata, not page 0's
+    assert [m["qpi_metadata"]["Biomarker"] for m in metadata["metadata"]] == [
+        "DAPI",
+        "CD8",
+        "CD4",
+    ]
+
+
+def test_qptiff_falls_back_without_channel_metadata(tmp_path):
+    """A QPTIFF missing per-channel names/colours keeps the generic metadata."""
+    filepath = tmp_path / "test_bare.qptiff"
+    write_qptiff(filepath, channels=[("", "", ""), ("", "", "")])
+
+    with TiffFile(filepath) as tif:
+        assert tif.is_qpi
+        metadata = tifffile_reader(tif)[0][1]
+
+    assert metadata.get("channel_axis") == 0
+    assert metadata.get("name") == ["Channel 0", "Channel 1"]
+    assert metadata.get("colormap") is None
+
+
+def test_qptiff_single_channel(tmp_path):
+    """A single channel QPTIFF has no channel axis to name or colour."""
+    filepath = tmp_path / "test_one.qptiff"
+    write_qptiff(filepath, channels=QPI_CHANNELS[:1])
+
+    with TiffFile(filepath) as tif:
+        assert tif.is_qpi
+        metadata = tifffile_reader(tif)[0][1]
+
+    assert metadata.get("channel_axis") is None
+    assert metadata.get("name") is None
+
+
+@pytest.mark.parametrize(
+    "color, expected",
+    [
+        ("0,0,255", (0.0, 0.0, 1.0, 1.0)),
+        ((255, 128, 0), (1.0, 128 / 255, 0.0, 1.0)),
+        # unusable values fall back to letting napari pick the colormaps
+        ("", None),
+        ("0,0", None),
+        ("r,g,b", None),
+        (None, None),
+    ],
+)
+def test_qpi_color_to_rgba(color, expected):
+    assert qpi_color_to_rgba(color) == expected
+
+
+@pytest.mark.parametrize(
+    "description",
+    [
+        pytest.param(None, id="no description tag"),
+        pytest.param("not xml at all", id="not xml"),
+    ],
+)
+def test_qptiff_unreadable_page_description(tmp_path, description):
+    """An unreadable page description falls back instead of raising.
+    """
+    filepath = tmp_path / "test_bad_description.qptiff"
+    with TiffWriter(filepath) as writer:
+        for index, page_description in enumerate([QPI_DESCRIPTION.format(
+            name="DAPI", biomarker="DAPI", color="0,0,255"
+        ), description]):
+            writer.write(
+                np.full((10, 20), index, dtype=np.uint8),
+                photometric="minisblack",
+                software="PerkinElmer-QPI",
+                metadata=None,
+                contiguous=False,
+                **({} if page_description is None else {"description": page_description}),
+            )
+
+    with TiffFile(filepath) as tif:
+        assert tif.is_qpi
+        metadata = tifffile_reader(tif)[0][1]
+
+    # both channels are still there; valid metadata from page 0 is preserved
+    assert metadata.get("channel_axis") == 0
+    assert metadata.get("name") == ["DAPI", "Channel 1"]
+    assert metadata.get("colormap") is None
+
+
+def test_qptiff_nested_biomarker_name(tmp_path):
+    """A structured biomarker produces a useful channel name."""
+    filepath = tmp_path / "test_biomarker.qptiff"
+    write_qptiff(
+        filepath,
+        channels=[
+            ("DAPI", "<Name>DAPI</Name>", "0,0,255"),
+            ("FITC", "CD8", "255,0,0"),
+        ],
+    )
+
+    with TiffFile(filepath) as tif:
+        metadata = tifffile_reader(tif)[0][1]
+
+    assert metadata.get("name") == ["DAPI", "CD8"]
+

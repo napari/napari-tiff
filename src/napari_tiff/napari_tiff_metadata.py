@@ -5,7 +5,12 @@ import numpy
 import numpy as np
 from tifffile import PHOTOMETRIC, tifffile, TiffFile, xml2dict
 
-from napari_tiff.napari_tiff_colormaps import alpha_colormap, int_to_rgba, CUSTOM_COLORMAPS
+from napari_tiff.napari_tiff_colormaps import (
+    alpha_colormap,
+    int_to_rgba,
+    qpi_color_to_rgba,
+    CUSTOM_COLORMAPS,
+)
 
 
 def get_metadata(tif: TiffFile) -> dict[str, Any]:
@@ -17,13 +22,23 @@ def get_metadata(tif: TiffFile) -> dict[str, Any]:
         metadata_kwargs = get_imagej_metadata(tif)
     elif tif.is_svs:
         metadata_kwargs = get_svs_metadata(tif)
+    elif tif.is_qpi:
+        metadata_kwargs = get_qpi_metadata(tif)
     else:
         metadata_kwargs = get_tiff_metadata(tif)
 
     # napari does not use this this extra `metadata` layer attribute
     # but storing the information on the layer next to the data
     # will allow users to access it and use it themselves if they wish
-    metadata_kwargs.setdefault("metadata", {}).update(get_extra_metadata(tif))
+    extra_metadata = get_extra_metadata(tif)
+    layer_metadata = metadata_kwargs.setdefault("metadata", {})
+    if not isinstance(layer_metadata, list):
+        # a single dict is shared by every layer, a list holds one per channel
+        layer_metadata = [layer_metadata]
+    for channel_metadata in layer_metadata:
+        for key, value in extra_metadata.items():
+            # prioritize any existing format specific metadata
+            channel_metadata.setdefault(key, value)
 
     return metadata_kwargs
 
@@ -306,6 +321,58 @@ def get_svs_metadata(tif: TiffFile) -> dict[str, Any]:
     metadata_kwargs["units"] = tuple(unit if ax in "XY" else "pixel" for ax in axes if ax not in "CS")
 
     metadata_kwargs.setdefault("metadata", {}).update({"SVS_metadata": svs_metadata})
+
+    return metadata_kwargs
+
+
+def get_qpi_metadata(tif: TiffFile) -> dict[str, Any]:
+    """Return napari metadata from a PerkinElmer/Akoya QPTIFF file.
+
+    Each channel of a QPTIFF is a separate page whose ImageDescription
+    has the marker and the color from the acquisition software.
+    This function uses that to set layer names, colormaps, and 
+    per-channel metadata.
+    """
+    metadata_kwargs = get_tiff_metadata(tif)
+
+    channel_axis = metadata_kwargs.get("channel_axis")
+    if channel_axis is None:
+        return metadata_kwargs
+
+    series = tif.series[0]
+    descriptions = []
+    for page in series.pages:
+        # If page metadata cannot be read just leave empty
+        try:
+            description = xml2dict(page.description)
+        except Exception:
+            description = None
+        if isinstance(description, dict):
+            description = description.get("PerkinElmer-QPI-ImageDescription")
+        descriptions.append(description if isinstance(description, dict) else {})
+
+    if len(descriptions) != series.shape[channel_axis]:
+        return metadata_kwargs
+
+    # Exposure time, filters, and other instrument metadata
+    metadata_kwargs["metadata"] = [
+        {"qpi_metadata": description} for description in descriptions
+    ]
+
+    names = []
+    for index, description in enumerate(descriptions):
+        biomarker = description.get("Biomarker")
+        if isinstance(biomarker, dict):
+            biomarker = biomarker.get("Name")
+        name = biomarker or description.get("Name") or f"Channel {index}"
+        names.append(str(name))
+    metadata_kwargs["name"] = names
+
+    colormaps = [
+        qpi_color_to_rgba(description.get("Color")) for description in descriptions
+    ]
+    if all(colormap is not None for colormap in colormaps):
+        metadata_kwargs["colormap"] = colormaps
 
     return metadata_kwargs
 

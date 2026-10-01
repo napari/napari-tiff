@@ -283,6 +283,21 @@ def test_qptiff_falls_back_without_channel_metadata(tmp_path):
     assert metadata.get("colormap") is None
 
 
+@pytest.mark.parametrize("color", ["255", "Blue", "0,0,255,255"])
+def test_qptiff_malformed_color(tmp_path, color):
+    """A Color that is not an RGB triplet falls back to napari colormaps."""
+    filepath = tmp_path / "test_bad_color.qptiff"
+    write_qptiff(filepath, channels=[("DAPI", "DAPI", "0,0,255"), ("FITC", "CD8", color)])
+
+    with TiffFile(filepath) as tif:
+        metadata = tifffile_reader(tif)[0][1]
+
+    # the rest of the channel metadata is unaffected
+    assert metadata.get("channel_axis") == 0
+    assert metadata.get("name") == ["DAPI", "CD8"]
+    assert metadata.get("colormap") is None
+
+
 def test_qptiff_single_channel(tmp_path):
     """A single channel QPTIFF has no channel axis to name or colour."""
     filepath = tmp_path / "test_one.qptiff"
@@ -297,15 +312,13 @@ def test_qptiff_single_channel(tmp_path):
 
 
 @pytest.mark.parametrize(
+    # xml2dict parses a "R,G,B" element into a tuple of ints
     "color, expected",
     [
-        ("0,0,255", (0.0, 0.0, 1.0, 1.0)),
+        ((0, 0, 255), (0.0, 0.0, 1.0, 1.0)),
         ((255, 128, 0), (1.0, 128 / 255, 0.0, 1.0)),
-        # unusable values fall back to letting napari pick the colormaps
-        ("", None),
-        ("0,0", None),
-        ("r,g,b", None),
-        (None, None),
+        ((255, 255, 255), (1.0, 1.0, 1.0, 1.0)),
+        ((0, 0, 0), (0.0, 0.0, 0.0, 1.0)),
     ],
 )
 def test_qpi_color_to_rgba(color, expected):

@@ -368,11 +368,10 @@ def get_qpi_metadata(tif: TiffFile) -> dict[str, Any]:
         names.append(str(name))
     metadata_kwargs["name"] = names
 
-    colormaps = [
-        qpi_color_to_rgba(description.get("Color")) for description in descriptions
-    ]
-    if all(colormap is not None for colormap in colormaps):
-        metadata_kwargs["colormap"] = colormaps
+    colors = [description.get("Color") for description in descriptions]
+    # parse RGB triplets, otherwise let napari handle colormaps
+    if all(isinstance(color, tuple) and len(color) == 3 for color in colors):
+        metadata_kwargs["colormap"] = [qpi_color_to_rgba(color) for color in colors]
 
     return metadata_kwargs
 

@@ -201,3 +201,25 @@ def test_tifffile_reader_splits_channels(tmp_path, nchannels):
     # the channel axis is consumed by the split, so it is not a layer dimension
     assert np.allclose(metadata.get("scale"), (25400 / 200, 25400 / 100))
     assert metadata.get("units") == ("µm", "µm")
+
+
+def test_ome_tiff_without_color(tmp_path):
+    """OME-TIFF with no Color info uses napari colormaps."""
+    data = np.zeros((3, 10, 20), dtype=np.uint8)
+    filepath = tmp_path / "test_no_color.ome.tiff"
+
+    imwrite(
+        filepath,
+        data,
+        ome=True,
+        metadata={"axes": "CYX", "Channel": {"Name": ["a", "b", "c"]}},
+    )
+
+    with TiffFile(filepath) as tif:
+        assert tif.is_ome
+        metadata = tifffile_reader(tif)[0][1]
+
+    assert metadata.get("channel_axis") == 0
+    assert metadata.get("name") == ["a", "b", "c"]
+    # None lets napari handle colormaps
+    assert metadata.get("colormap") is None

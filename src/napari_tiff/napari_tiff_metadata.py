@@ -404,6 +404,10 @@ def get_ome_tiff_metadata(tif: TiffFile) -> dict[str, Any]:
             colormaps = colormap
             visibles = visible
 
+    # If no channel has a Color use None to get napari defaults
+    if isinstance(colormaps, list) and all(c is None for c in colormaps):
+        colormaps = None
+
     kwargs = dict(
         rgb=is_rgb,
         channel_axis=channel_axis,

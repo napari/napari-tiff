@@ -18,3 +18,8 @@ def int_to_rgba(intrgba: int) -> tuple:
     if rgba[-1] == 0:
         rgba[-1] = 1
     return tuple(rgba)
+
+
+def qpi_color_to_rgba(color: tuple[int, int, int]) -> tuple[float, float, float, float]:
+    """Convert a QPTIFF 'Color' element (R, G, B in 0-255) to an RGBA tuple."""
+    return (*(value / 255 for value in color), 1.0)

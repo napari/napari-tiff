@@ -53,13 +53,16 @@ def test_int_to_rgba_replaces_zero_alpha_with_opaque():
     assert int_to_rgba(0xFF804000) == (1.0, 128 / 255, 64 / 255, 1)
 
 
-def test_qpi_color_to_rgba_scales_channels_to_unit_range():
-    assert qpi_color_to_rgba((255, 0, 0)) == (1.0, 0.0, 0.0, 1.0)
-    assert qpi_color_to_rgba((0, 0, 0)) == (0.0, 0.0, 0.0, 1.0)
-    assert qpi_color_to_rgba((128, 64, 255)) == (128 / 255, 64 / 255, 1.0, 1.0)
-
-
-def test_qpi_color_to_rgba_always_returns_opaque_alpha():
-    for color in [(0, 0, 0), (17, 200, 3), (255, 255, 255)]:
-        assert len(qpi_color_to_rgba(color)) == 4
-        assert qpi_color_to_rgba(color)[3] == 1.0
+@pytest.mark.parametrize(
+    # xml2dict parses a "R,G,B" element into a tuple of ints
+    "color, expected",
+    [
+        ((0, 0, 255), (0.0, 0.0, 1.0, 1.0)),
+        ((255, 128, 0), (1.0, 128 / 255, 0.0, 1.0)),
+        ((255, 255, 255), (1.0, 1.0, 1.0, 1.0)),
+        ((0, 0, 0), (0.0, 0.0, 0.0, 1.0)),
+        ((17, 200, 3), (17 / 255, 200 / 255, 3 / 255, 1.0)),
+    ],
+)
+def test_qpi_color_to_rgba(color, expected):
+    assert qpi_color_to_rgba(color) == expected

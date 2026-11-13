@@ -9,7 +9,7 @@ see: https://napari.org/docs/plugins/hook_specifications.html
 Replace code below accordingly.  For complete documentation see:
 https://napari.org/docs/plugins/for_plugin_developers.html
 """
-import os
+from pathlib import Path
 
 import dask.array as da
 import numpy as np
@@ -54,7 +54,7 @@ def napari_get_reader(path: PathLike) -> Optional[ReaderFunction]:
 
 def reader_function(path: PathLike) -> List[LayerData]:
     """Return a list of LayerData tuples from path or list of paths."""
-    if isinstance(path, (list, tuple)):
+    if isinstance(path, list):
         # napari hands over a list of paths for "Open Files as Stack"
         return stack_reader(path)
     # TODO: LSM
@@ -105,16 +105,12 @@ def stack_reader(paths: List[str]) -> List[LayerData]:
         shapes = [d.shape for d in datas]
         if any(shape != shapes[0] for shape in shapes):
             raise _shape_mismatch_error(paths, shapes)
-        data = da.stack(datas) if isinstance(first, da.Array) else np.stack(datas)
+        data = da.stack(datas)
 
     return [(data, _prepend_axis(layers[0][1], "stack"), "image")]
 
 
-def _normpath(path: str) -> str:
-    return os.path.normcase(os.path.abspath(path))
-
-
-def _multifile_ome_series(path: str) -> Optional[Dict[str, int]]:
+def _multifile_ome_series(path: str) -> Optional[Dict[Path, int]]:
     """Return {file: series index} if path is one file of a multi-file OME set.
 
     Only sets whose series are positions (see ``_ome_positions``) and each live
@@ -126,11 +122,12 @@ def _multifile_ome_series(path: str) -> Optional[Dict[str, int]]:
                 return None
             series_files = {}
             for index, series in enumerate(tif.series):
-                files = {_normpath(page.parent.filehandle.path) for page in series.pages if page is not None}
+                files = {Path(page.parent.filehandle.path).resolve() for page in series.pages if page is not None}
                 if len(files) != 1:
                     return None
                 series_files[files.pop()] = index
-    except Exception:
+    except Exception as exc:
+        log_warning(f"Cannot read the OME series of {path}: {exc}")
         return None
     if len(series_files) != len(tif.series):  # several series in one file
         return None
@@ -148,9 +145,10 @@ def _group_multifile_ome(paths: List[str]) -> List[Tuple[str, Optional[List[int]
     file still finds the others (it matches the UUID its set refers to). So a
     file is also grouped into a set that another selected file describes.
     """
-    cache: Dict[str, Optional[Dict[str, int]]] = {}
+    resolved = {path: Path(path).resolve() for path in paths}
+    cache: Dict[str, Optional[Dict[Path, int]]] = {}
 
-    def series_files_of(path: str) -> Optional[Dict[str, int]]:
+    def series_files_of(path: str) -> Optional[Dict[Path, int]]:
         if path not in cache:
             cache[path] = _multifile_ome_series(path)
         return cache[path]
@@ -158,15 +156,15 @@ def _group_multifile_ome(paths: List[str]) -> List[Tuple[str, Optional[List[int]
     groups: List[Tuple[str, Optional[List[int]]]] = []
     claimed = set()  # files already grouped into a multi-file OME set
     for path in paths:
-        if _normpath(path) in claimed:
+        if resolved[path] in claimed:
             continue
         # the file's own set first; other files are only opened if needed
         owner = next(
             (
                 candidate
                 for candidate in (path, *paths)
-                if _normpath(candidate) not in claimed
-                and _normpath(path) in (series_files_of(candidate) or {})
+                if resolved[candidate] not in claimed
+                and resolved[path] in (series_files_of(candidate) or {})
             ),
             None,
         )
@@ -174,7 +172,7 @@ def _group_multifile_ome(paths: List[str]) -> List[Tuple[str, Optional[List[int]
             groups.append((path, None))
             continue
         series_files = series_files_of(owner)
-        members = [_normpath(p) for p in paths if _normpath(p) in series_files and _normpath(p) not in claimed]
+        members = [resolved[p] for p in paths if resolved[p] in series_files and resolved[p] not in claimed]
         claimed.update(members)
         groups.append((owner, [series_files[member] for member in members]))
     return groups
@@ -183,7 +181,7 @@ def _group_multifile_ome(paths: List[str]) -> List[Tuple[str, Optional[List[int]
 def _ome_set_reader(path: str, series_indices: List[int]) -> List[LayerData]:
     """Return napari LayerData of the selected positions of a multi-file OME set."""
     with TiffFile(path) as tif:
-        data = np.stack([_read_series(tif, tif.series[index]) for index in series_indices])
+        data = da.stack([_read_series(tif, tif.series[index]) for index in series_indices])
         metadata_kwargs = get_metadata(tif)
     return [(data, _prepend_axis(metadata_kwargs, "p"), "image")]
 
@@ -246,7 +244,7 @@ def tifffile_reader(tif: TiffFile) -> List[LayerData]:
         # per position) the other files are read only with "Open Files as Stack".
         positions = [series for series in _ome_positions(tif) if _is_in_file(tif, series)]
         if len(positions) > 1:
-            data = np.stack([_read_series(tif, series) for series in positions])
+            data = da.stack([_read_series(tif, series) for series in positions])
         elif positions:
             data = _read_series(tif, positions[0])
         else:

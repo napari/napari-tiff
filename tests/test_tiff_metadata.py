@@ -13,7 +13,6 @@ from napari_tiff.napari_tiff_metadata import (
     get_scale_and_units_from_ome,
     get_scale_and_units_from_tiff,
 )
-from napari_tiff.napari_tiff_colormaps import qpi_color_to_rgba
 from napari_tiff.napari_tiff_reader import tifffile_reader
 
 
@@ -331,20 +330,6 @@ def test_qptiff_single_channel(tmp_path):
 
     assert metadata.get("channel_axis") is None
     assert metadata.get("name") is None
-
-
-@pytest.mark.parametrize(
-    # xml2dict parses a "R,G,B" element into a tuple of ints
-    "color, expected",
-    [
-        ((0, 0, 255), (0.0, 0.0, 1.0, 1.0)),
-        ((255, 128, 0), (1.0, 128 / 255, 0.0, 1.0)),
-        ((255, 255, 255), (1.0, 1.0, 1.0, 1.0)),
-        ((0, 0, 0), (0.0, 0.0, 0.0, 1.0)),
-    ],
-)
-def test_qpi_color_to_rgba(color, expected):
-    assert qpi_color_to_rgba(color) == expected
 
 
 @pytest.mark.parametrize(

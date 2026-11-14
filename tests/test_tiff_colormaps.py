@@ -18,8 +18,6 @@ def test_alpha_colormap_default_shape_and_name():
 def test_alpha_colormap_alpha_ramp_runs_from_opaque_to_transparent():
     colors = alpha_colormap()["colors"]
     np.testing.assert_allclose(colors[:, 3], np.linspace(1.0, 0.0, 256), rtol=1e-6)
-    assert colors[0, 3] == 1.0
-    assert colors[-1, 3] == 0.0
 
 
 def test_alpha_colormap_rgb_channels_are_black():
